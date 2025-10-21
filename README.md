@@ -1,13 +1,26 @@
 # Game Playground
 
-A tiny web-based playground showcasing a simple browser game rendered with HTML5 canvas. The project is set up to deploy automatically to GitHub Pages using GitHub Actions.
+A multi-app sandbox for experimenting with tiny games and micro front-ends. Each app lives in its own folder and is published to GitHub Pages under the same path (for example, `/app-1/`).
 
-## Game Controls
-- `←` / `→`: Move the paddle
-- Catch the falling balls to score points and avoid letting them hit the ground.
+## Live Site
+- https://timrefsix.github.io/game-playground/
+
+## Projects
+- `/game` — HTML5 canvas catch-the-orb toy.
+- `/app-1` — React counter demo scaffolded with Vite.
+- `/app-2` — React color cycler also built with Vite.
+
+Add new apps by dropping any static site (React, Hugo, plain HTML, etc.) into a sibling folder and updating the deploy workflow if it needs a custom build.
 
 ## Development
-Open `index.html` in your browser or serve the folder with any static file server.
+```bash
+# Install dependencies for a specific app
+npm install --prefix app-1
+npm install --prefix app-2
+
+# Run a dev server
+npm run dev --prefix app-1
+```
 
 ## Deployment
-Pushing changes to the `main` branch triggers the GitHub Actions workflow in `.github/workflows/pages.yml` to build and deploy the site to GitHub Pages.
+Pushing to `main` triggers `.github/workflows/pages.yml`, which builds each app and publishes the combined output to GitHub Pages.
