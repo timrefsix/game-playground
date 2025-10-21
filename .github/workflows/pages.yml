@@ -30,16 +30,19 @@ jobs:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: |
-            app-1/package-lock.json
-            app-2/package-lock.json
+            tetris-puzzle/package-lock.json
+            maze-generator/package-lock.json
+            maze-compiler/package-lock.json
 
       - name: Build React apps
         run: |
           set -eux
-          npm ci --prefix app-1
-          npm run build --prefix app-1
-          npm ci --prefix app-2
-          npm run build --prefix app-2
+          npm ci --prefix tetris-puzzle
+          npm run build --prefix tetris-puzzle
+          npm ci --prefix maze-generator
+          npm run build --prefix maze-generator
+          npm ci --prefix maze-compiler
+          npm run build --prefix maze-compiler
 
       - name: Prepare static site
         run: |
@@ -47,9 +50,9 @@ jobs:
           rm -rf site
           mkdir -p site
           cp index.html site/index.html
-          cp -R game site/game
-          cp -R app-1/dist site/app-1
-          cp -R app-2/dist site/app-2
+          cp -R tetris-puzzle/dist site/tetris-puzzle
+          cp -R maze-generator/dist site/maze-generator
+          cp -R maze-compiler/dist site/maze-compiler
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
