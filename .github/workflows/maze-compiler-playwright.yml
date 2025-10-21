@@ -1,0 +1,38 @@
+name: Maze Compiler E2E
+
+on:
+  push:
+    paths:
+      - 'maze-compiler/**'
+      - '.github/workflows/maze-compiler-playwright.yml'
+  pull_request:
+    paths:
+      - 'maze-compiler/**'
+      - '.github/workflows/maze-compiler-playwright.yml'
+
+jobs:
+  playwright:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: maze-compiler
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: maze-compiler/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
