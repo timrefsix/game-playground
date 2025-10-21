@@ -9,19 +9,24 @@ const TetrisPuzzle = () => {
     { id: 4, shape: [[1, 0], [1, 1], [0, 1]], color: '#00f000', placed: false }, // S-piece
     { id: 5, shape: [[1, 1, 1], [1, 0, 0]], color: '#0000f0', placed: false }, // L-piece
   ]);
+  const [piecePositions, setPiecePositions] = useState({});
   
   const [dragging, setDragging] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoveredCell, setHoveredCell] = useState(null);
   const gridRef = useRef(null);
 
-  const canPlacePiece = (shape, row, col) => {
+  const canPlacePiece = (shape, row, col, movingPieceId = null) => {
     for (let r = 0; r < shape.length; r++) {
       for (let c = 0; c < shape[r].length; c++) {
         if (shape[r][c]) {
           const gridRow = row + r;
           const gridCol = col + c;
-          if (gridRow < 0 || gridRow >= 5 || gridCol < 0 || gridCol >= 5 || grid[gridRow][gridCol]) {
+          if (gridRow < 0 || gridRow >= 5 || gridCol < 0 || gridCol >= 5) {
+            return false;
+          }
+          const existingCell = grid[gridRow][gridCol];
+          if (existingCell && existingCell !== movingPieceId) {
             return false;
           }
         }
@@ -31,16 +36,49 @@ const TetrisPuzzle = () => {
   };
 
   const placePiece = (shape, row, col, pieceId) => {
-    const newGrid = grid.map(row => [...row]);
-    for (let r = 0; r < shape.length; r++) {
-      for (let c = 0; c < shape[r].length; c++) {
-        if (shape[r][c]) {
-          newGrid[row + r][col + c] = pieceId;
+    setGrid(prevGrid => {
+      const newGrid = prevGrid.map(gridRow => [...gridRow]);
+
+      const previousPosition = piecePositions[pieceId];
+      if (previousPosition) {
+        for (let r = 0; r < shape.length; r++) {
+          for (let c = 0; c < shape[r].length; c++) {
+            if (shape[r][c]) {
+              const prevRow = previousPosition.row + r;
+              const prevCol = previousPosition.col + c;
+              if (
+                prevRow >= 0 &&
+                prevRow < newGrid.length &&
+                prevCol >= 0 &&
+                prevCol < newGrid[prevRow].length &&
+                newGrid[prevRow][prevCol] === pieceId
+              ) {
+                newGrid[prevRow][prevCol] = false;
+              }
+            }
+          }
         }
       }
-    }
-    setGrid(newGrid);
-    setPieces(pieces.map(p => p.id === pieceId ? { ...p, placed: true } : p));
+
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (shape[r][c]) {
+            newGrid[row + r][col + c] = pieceId;
+          }
+        }
+      }
+
+      return newGrid;
+    });
+
+    setPiecePositions(prevPositions => ({
+      ...prevPositions,
+      [pieceId]: { row, col }
+    }));
+
+    setPieces(prevPieces =>
+      prevPieces.map(p => (p.id === pieceId ? { ...p, placed: true } : p))
+    );
   };
 
   const handleStart = (e, piece) => {
@@ -49,7 +87,12 @@ const TetrisPuzzle = () => {
     const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
     const rect = e.currentTarget.getBoundingClientRect();
     
-    setDragging(piece);
+    const origin = piecePositions[piece.id] || null;
+
+    setDragging({
+      ...piece,
+      origin
+    });
     setDragOffset({
       x: clientX - rect.left,
       y: clientY - rect.top
@@ -76,17 +119,23 @@ const TetrisPuzzle = () => {
     }
   };
 
-  const handleEnd = (e) => {
-    if (!dragging || !hoveredCell) {
-      setDragging(null);
-      setHoveredCell(null);
-      return;
+  const handleEnd = () => {
+    if (dragging) {
+      if (
+        hoveredCell &&
+        canPlacePiece(
+          dragging.shape,
+          hoveredCell.row,
+          hoveredCell.col,
+          dragging.id
+        )
+      ) {
+        placePiece(dragging.shape, hoveredCell.row, hoveredCell.col, dragging.id);
+      } else if (dragging.origin) {
+        placePiece(dragging.shape, dragging.origin.row, dragging.origin.col, dragging.id);
+      }
     }
-    
-    if (canPlacePiece(dragging.shape, hoveredCell.row, hoveredCell.col)) {
-      placePiece(dragging.shape, hoveredCell.row, hoveredCell.col, dragging.id);
-    }
-    
+
     setDragging(null);
     setHoveredCell(null);
   };
@@ -99,7 +148,8 @@ const TetrisPuzzle = () => {
 
   const resetGame = () => {
     setGrid(Array(5).fill().map(() => Array(5).fill(false)));
-    setPieces(pieces.map(p => ({ ...p, placed: false })));
+    setPiecePositions({});
+    setPieces(prevPieces => prevPieces.map(p => ({ ...p, placed: false })));
   };
 
   const isComplete = grid.every(row => row.every(cell => cell !== false));
@@ -212,8 +262,7 @@ const TetrisPuzzle = () => {
         }
         
         .piece.placed {
-          opacity: 0.3;
-          pointer-events: none;
+          opacity: 0.6;
         }
         
         .piece-cell {
@@ -295,7 +344,12 @@ const TetrisPuzzle = () => {
               for (let sr = 0; sr < shape.length; sr++) {
                 for (let sc = 0; sc < shape[sr].length; sc++) {
                   if (shape[sr][sc] && r === hRow + sr && c === hCol + sc) {
-                    const canPlace = canPlacePiece(shape, hRow, hCol);
+                    const canPlace = canPlacePiece(
+                      shape,
+                      hRow,
+                      hCol,
+                      dragging.id
+                    );
                     className += canPlace ? ' preview' : ' invalid-preview';
                     if (canPlace) {
                       backgroundColor = dragging.color;
