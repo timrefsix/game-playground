@@ -34,6 +34,7 @@ jobs:
             maze-generator/package-lock.json
             maze-compiler/package-lock.json
             maze-robot/package-lock.json
+            chord-playground/package-lock.json
 
       - name: Build React apps
         run: |
@@ -46,6 +47,8 @@ jobs:
           npm run build --prefix maze-compiler
           npm ci --prefix maze-robot
           npm run build --prefix maze-robot
+          npm ci --prefix chord-playground
+          npm run build --prefix chord-playground
 
       - name: Prepare static site
         run: |
@@ -57,6 +60,7 @@ jobs:
           cp -R maze-generator/dist site/maze-generator
           cp -R maze-compiler/dist site/maze-compiler
           cp -R maze-robot/dist site/maze-robot
+          cp -R chord-playground/dist site/chord-playground
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

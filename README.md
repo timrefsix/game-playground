@@ -9,6 +9,7 @@ A multi-app sandbox for experimenting with puzzle mechanics, maze tooling, and o
 - `/tetris-puzzle` — Drag-and-drop Tetris pieces to fill a 5×5 grid.
 - `/maze-generator` — Visual maze generator supporting several algorithms and export options.
 - `/maze-compiler` — Experimental IDE that compiles MazeScript into MASM-inspired bytecode.
+- `/chord-playground` — Browser-based chord progression generator powered by Tone.js for real-time audio playback.
 
 To add more apps, drop any static site (React, Hugo, plain HTML, etc.) into a sibling directory and update the deploy workflow if a custom build is required.
 
@@ -18,9 +19,11 @@ To add more apps, drop any static site (React, Hugo, plain HTML, etc.) into a si
 npm install --prefix tetris-puzzle
 npm install --prefix maze-generator
 npm install --prefix maze-compiler
+npm install --prefix chord-playground
 
 # Run a dev server
 npm run dev --prefix maze-generator
+npm run dev --prefix chord-playground
 ```
 
 ## Deployment
