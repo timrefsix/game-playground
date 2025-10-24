@@ -10,6 +10,8 @@ export class RobotInterpreter {
   public completed: boolean
   public error: string | null
   private sensorResults: Map<string, boolean>
+  private endPos: Position
+  private visited: Set<string>
 
   constructor(maze: Maze, startPos: Position, startDir: Direction) {
     this.maze = maze
@@ -19,6 +21,23 @@ export class RobotInterpreter {
     this.completed = false
     this.error = null
     this.sensorResults = new Map()
+    this.endPos = this.findEndPosition()
+    this.visited = new Set([this.posToKey(this.pos)])
+  }
+
+  private posToKey(position: Position): string {
+    return `${position.x},${position.y}`
+  }
+
+  private findEndPosition(): Position {
+    for (let y = 0; y < this.maze.length; y++) {
+      for (let x = 0; x < this.maze[y].length; x++) {
+        if (this.maze[y][x] === CellType.END) {
+          return { x, y }
+        }
+      }
+    }
+    throw new Error('Maze is missing an end position')
   }
 
   private canMove(x: number, y: number): boolean {
@@ -42,6 +61,7 @@ export class RobotInterpreter {
     this.pos.x = newX
     this.pos.y = newY
     this.path.push({ ...this.pos })
+    this.visited.add(this.posToKey(this.pos))
 
     // Check if reached goal
     if (this.maze[newY][newX] === CellType.END) {
@@ -79,6 +99,52 @@ export class RobotInterpreter {
     return this.maze[y][x] === CellType.WALL
   }
 
+  private computeDistance(start: Position): number {
+    const queue: Array<{ x: number; y: number; distance: number }> = [{
+      x: start.x,
+      y: start.y,
+      distance: 0
+    }]
+    const visited = new Set<string>([this.posToKey(start)])
+
+    while (queue.length > 0) {
+      const current = queue.shift()
+      if (!current) {
+        break
+      }
+
+      if (current.x === this.endPos.x && current.y === this.endPos.y) {
+        return current.distance
+      }
+
+      const deltas = [
+        { dx: 0, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }
+      ]
+
+      for (const { dx, dy } of deltas) {
+        const nextX = current.x + dx
+        const nextY = current.y + dy
+        const key = `${nextX},${nextY}`
+
+        if (visited.has(key)) {
+          continue
+        }
+
+        if (!this.canMove(nextX, nextY)) {
+          continue
+        }
+
+        visited.add(key)
+        queue.push({ x: nextX, y: nextY, distance: current.distance + 1 })
+      }
+    }
+
+    return Number.POSITIVE_INFINITY
+  }
+
   public sensor(direction: string): boolean {
     const dir = direction.toLowerCase().trim()
     const absoluteDir = this.getRelativeDirection(dir)
@@ -91,6 +157,44 @@ export class RobotInterpreter {
     const result = this.isWall(checkX, checkY)
     this.sensorResults.set(dir, result)
     return result
+  }
+
+  public isCloser(direction: string): boolean {
+    const dir = direction.toLowerCase().trim()
+    const absoluteDir = this.getRelativeDirection(dir)
+
+    const dx = [0, 1, 0, -1][absoluteDir]
+    const dy = [-1, 0, 1, 0][absoluteDir]
+    const checkX = this.pos.x + dx
+    const checkY = this.pos.y + dy
+
+    if (!this.canMove(checkX, checkY)) {
+      return false
+    }
+
+    const currentDistance = this.computeDistance(this.pos)
+    const nextDistance = this.computeDistance({ x: checkX, y: checkY })
+
+    if (!Number.isFinite(currentDistance) || !Number.isFinite(nextDistance)) {
+      return false
+    }
+
+    return nextDistance < currentDistance
+  }
+
+  public getDistanceToGoal(): number {
+    const distance = this.computeDistance(this.pos)
+    if (!Number.isFinite(distance)) {
+      return -1
+    }
+    return distance
+  }
+
+  public getVisitedPositions(): Position[] {
+    return Array.from(this.visited.values()).map(key => {
+      const [x, y] = key.split(',').map(Number)
+      return { x, y }
+    })
   }
 
   public getLastSensorResult(direction: string): boolean | undefined {
@@ -189,9 +293,15 @@ function flattenAST(ast: BlockNode, interpreter?: RobotInterpreter): string[] {
           node.body.forEach(walkNode)
           break
         }
-        const sensorResult = interpreter.sensor(node.condition.direction)
-        const condition = node.condition.negated ? !sensorResult : sensorResult
-        if (condition) {
+        let conditionResult = false
+        if (node.condition.type === 'sensor') {
+          const sensorResult = interpreter.sensor(node.condition.direction)
+          conditionResult = node.condition.negated ? !sensorResult : sensorResult
+        } else if (node.condition.type === 'closer') {
+          const closerResult = interpreter.isCloser(node.condition.direction)
+          conditionResult = node.condition.negated ? !closerResult : closerResult
+        }
+        if (conditionResult) {
           node.body.forEach(walkNode)
         }
         break

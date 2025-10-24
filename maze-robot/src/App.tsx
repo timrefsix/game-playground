@@ -189,6 +189,8 @@ function App() {
             maze={level.maze}
             robotPos={interpreter.pos}
             robotDir={interpreter.dir}
+            visited={interpreter.getVisitedPositions()}
+            fogOfWar={level.fogOfWar}
           />
 
           {message && (

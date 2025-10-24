@@ -11,7 +11,7 @@ test.describe('Error Handling', () => {
 
     await page.getByRole('button', { name: 'Play' }).click()
 
-    await expect(page.getByText(/Unknown expression 'jump'/)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/Unknown function 'jump'/)).toBeVisible({ timeout: 5000 })
   })
 
   test('should show error for hitting wall', async ({ page }) => {

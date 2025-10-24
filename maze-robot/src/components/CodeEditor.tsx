@@ -16,6 +16,7 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
   const showTurning = currentLevel >= 2
   const showRepeat = currentLevel >= 4
   const showSensors = currentLevel >= 5
+  const showDistanceSensors = currentLevel >= 6
 
   const handleCommandClick = (command: string) => {
     const newCode = code ? `${code}\n${command}` : command
@@ -37,6 +38,9 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
     }
     if (showSensors) {
       commands.push('(if (sensor direction) (...))', '(if (not (sensor direction)) (...))')
+    }
+    if (showDistanceSensors) {
+      commands.push('(if (closer direction) (...))', '(set steps (distance-to-end))')
     }
 
     const commandsList = commands.map(cmd => `;   ${cmd}`).join('\n')
@@ -134,6 +138,30 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
               </li>
             </>
           )}
+          {showDistanceSensors && (
+            <>
+              <li>
+                <code
+                  onClick={() =>
+                    handleCommandClick('(if (closer front)\n  (forward)\n)')
+                  }
+                  className="clickable"
+                >
+                  (if (closer direction) ...)
+                </code>{' '}
+                - Move toward the goal when that direction is closer
+              </li>
+              <li>
+                <code
+                  onClick={() => handleCommandClick('(set steps (distance-to-end))')}
+                  className="clickable"
+                >
+                  (distance-to-end)
+                </code>{' '}
+                - Get the number of steps to the goal
+              </li>
+            </>
+          )}
         </ul>
         {!dismissedTips.has('comments') && (
           <p className="tip" onClick={() => dismissTip('comments')}>
@@ -144,6 +172,12 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
         {showSensors && !dismissedTips.has('sensors') && (
           <p className="tip" onClick={() => dismissTip('sensors')}>
             🔍 Tip: Use sensors to detect walls and make decisions
+            <span className="dismiss-icon">✕</span>
+          </p>
+        )}
+        {showDistanceSensors && !dismissedTips.has('distance') && (
+          <p className="tip" onClick={() => dismissTip('distance')}>
+            🧭 Tip: Level 6 adds distance tools — combine (closer …) with (distance-to-end)
             <span className="dismiss-icon">✕</span>
           </p>
         )}

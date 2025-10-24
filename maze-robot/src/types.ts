@@ -28,6 +28,7 @@ export interface Level {
   maze: Maze
   startPos: Position
   startDir: Direction
+  fogOfWar?: boolean
 }
 
 export interface RobotState {

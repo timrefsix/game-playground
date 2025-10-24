@@ -54,6 +54,18 @@ describe('Parser', () => {
     expect(ast.statements[0].type).toBe('if')
   })
 
+  it('should parse distance-based conditions', () => {
+    const parser = new Parser('(if (closer right) (turn right))')
+    const ast = parser.parse()
+    expect(ast.statements.length).toBe(1)
+    expect(ast.statements[0].type).toBe('if')
+    const statement = ast.statements[0]
+    if (statement.type === 'if') {
+      expect(statement.condition.type).toBe('closer')
+      expect(statement.condition.direction).toBe('right')
+    }
+  })
+
   it('should parse set statements', () => {
     const parser = new Parser('(set steps 3)')
     const ast = parser.parse()
@@ -63,6 +75,16 @@ describe('Parser', () => {
     if (statement.type === 'set') {
       expect(statement.name).toBe('steps')
       expect(statement.value.type).toBe('number_literal')
+    }
+  })
+
+  it('should parse distance-to-end expressions', () => {
+    const parser = new Parser('(set d (distance-to-end))')
+    const ast = parser.parse()
+    expect(ast.statements.length).toBe(1)
+    const statement = ast.statements[0]
+    if (statement.type === 'set') {
+      expect(statement.value.type).toBe('distance_to_end')
     }
   })
 

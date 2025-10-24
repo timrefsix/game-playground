@@ -53,6 +53,20 @@
   box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
 }
 
+.cell.fog {
+  background: #0b0f16;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.cell.fog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), rgba(15, 20, 25, 0.9));
+  border-radius: 4px;
+}
+
 .robot {
   font-size: 32px;
   color: #e74c3c;
