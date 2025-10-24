@@ -147,9 +147,14 @@ export class ASTExecutor {
         // Pop the if node immediately
         this.context.nodeStack.pop()
 
-        // Evaluate the condition NOW (with current robot state)
-        const sensorResult = this.interpreter.sensor(ifNode.condition.direction)
-        const condition = ifNode.condition.negated ? !sensorResult : sensorResult
+        let condition = false
+        if (ifNode.condition.type === 'sensor') {
+          const sensorResult = this.interpreter.sensor(ifNode.condition.direction)
+          condition = ifNode.condition.negated ? !sensorResult : sensorResult
+        } else if (ifNode.condition.type === 'closer') {
+          const closerResult = this.interpreter.isCloser(ifNode.condition.direction)
+          condition = ifNode.condition.negated ? !closerResult : closerResult
+        }
 
         if (condition) {
           // Push the body as a new block
@@ -243,6 +248,10 @@ export class ASTExecutor {
         throw new Error(`Undefined variable '${expr.name}' at line ${expr.line ?? 'unknown'}`)
       }
       return value
+    }
+
+    if (expr.type === 'distance_to_end') {
+      return this.interpreter.getDistanceToGoal()
     }
 
     throw new Error('Unsupported expression')

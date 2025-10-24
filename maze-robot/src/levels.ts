@@ -86,4 +86,24 @@ export const LEVELS: Level[] = [
     startPos: { x: 1, y: 1 },
     startDir: Direction.EAST,
   },
+  {
+    id: 6,
+    name: "Into the Unknown",
+    description:
+      "Only the start and goal are visible. Use distance-based logic to navigate through the fog! Try: if (closer direction) ...",
+    maze: [
+      [1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 2, 0, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 1, 1, 0, 1],
+      [1, 0, 1, 1, 1, 1, 1, 0, 1],
+      [1, 0, 1, 1, 3, 1, 1, 0, 1],
+      [1, 0, 1, 1, 0, 1, 1, 0, 1],
+      [1, 0, 1, 1, 0, 1, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ],
+    startPos: { x: 1, y: 1 },
+    startDir: Direction.EAST,
+    fogOfWar: true,
+  },
 ]

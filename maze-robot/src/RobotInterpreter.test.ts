@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { RobotInterpreter, parseCode } from './RobotInterpreter'
 import { Direction } from './types'
+import { Parser } from './Parser'
+import { ASTExecutor } from './ASTExecutor'
 
 describe('RobotInterpreter', () => {
   const simpleMaze = [
@@ -202,6 +204,134 @@ describe('RobotInterpreter', () => {
       const success = interpreter.execute('forward')
       expect(success).toBe(false)
     })
+  })
+
+  describe('distance utilities', () => {
+    it('should calculate distance to goal', () => {
+      expect(interpreter.getDistanceToGoal()).toBe(3)
+      interpreter.execute('forward')
+      expect(interpreter.getDistanceToGoal()).toBe(2)
+    })
+
+    it('should identify closer directions', () => {
+      const maze = [
+        [1, 1, 1, 1, 1],
+        [1, 2, 0, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 1, 3, 1],
+        [1, 1, 1, 1, 1],
+      ]
+      const localInterpreter = new RobotInterpreter(maze, { x: 1, y: 1 }, Direction.EAST)
+
+      expect(localInterpreter.isCloser('front')).toBe(true)
+      localInterpreter.execute('forward')
+      // From this position the optimal move is to turn right towards the goal
+      expect(localInterpreter.isCloser('right')).toBe(true)
+    })
+
+    it('should expose visited positions including the start', () => {
+      expect(interpreter.getVisitedPositions()).toContainEqual({ x: 1, y: 1 })
+      interpreter.execute('forward')
+      expect(interpreter.getVisitedPositions()).toContainEqual({ x: 2, y: 1 })
+    })
+  })
+})
+
+describe('Level 6 challenge', () => {
+  const levelSixMaze = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 2, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 3, 1, 1, 0, 1],
+    [1, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+  ]
+
+  const createExecutor = (code: string) => {
+    const interpreter = new RobotInterpreter(levelSixMaze, { x: 1, y: 1 }, Direction.EAST)
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    const executor = new ASTExecutor(interpreter, ast)
+    return { executor, interpreter }
+  }
+
+  it('left-hand algorithm should not complete the maze', () => {
+    const code = `
+      (repeat 200
+        (if (not (sensor left))
+          (turn left)
+        )
+        (if (sensor front)
+          (turn right)
+        )
+        (if (sensor front)
+          (turn right)
+        )
+        (forward)
+      )
+    `
+
+    const { executor, interpreter } = createExecutor(code)
+
+    let step = 1
+    while (executor.hasMore() && step <= 1000) {
+      executor.executeStep()
+      step++
+    }
+
+    expect(interpreter.completed).toBe(false)
+    expect(interpreter.error).toBeNull()
+  })
+
+  it('distance-based navigation should solve the maze', () => {
+    const code = `
+      (function step ()
+        (if (closer left)
+          (turn left)
+          (forward)
+        )
+        (if (not (closer left))
+          (if (closer front)
+            (forward)
+          )
+        )
+        (if (not (closer left))
+          (if (not (closer front))
+            (if (closer right)
+              (turn right)
+              (forward)
+            )
+          )
+        )
+        (if (not (closer left))
+          (if (not (closer front))
+            (if (not (closer right))
+              (turn right)
+              (turn right)
+              (forward)
+            )
+          )
+        )
+      )
+      (repeat 60 (step))
+    `
+
+    const { executor, interpreter } = createExecutor(code)
+
+    let step = 1
+    while (executor.hasMore() && step <= 2000) {
+      executor.executeStep()
+      if (interpreter.completed || interpreter.error) {
+        break
+      }
+      step++
+    }
+
+    expect(interpreter.completed).toBe(true)
+    expect(interpreter.error).toBeNull()
   })
 })
 

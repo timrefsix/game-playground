@@ -9,7 +9,23 @@ export type ASTNode =
   | FunctionNode
   | CallNode
 
-export type ExpressionNode = NumberLiteralNode | VariableReferenceNode
+export type ExpressionNode = NumberLiteralNode | VariableReferenceNode | DistanceToEndNode
+
+export type IfCondition =
+  | SensorCondition
+  | CloserCondition
+
+export interface SensorCondition {
+  type: 'sensor'
+  direction: 'front' | 'back' | 'left' | 'right'
+  negated: boolean
+}
+
+export interface CloserCondition {
+  type: 'closer'
+  direction: 'front' | 'back' | 'left' | 'right'
+  negated: boolean
+}
 
 export interface CommandNode {
   type: 'command'
@@ -26,10 +42,7 @@ export interface RepeatNode {
 
 export interface IfNode {
   type: 'if'
-  condition: {
-    negated: boolean
-    direction: 'front' | 'back' | 'left' | 'right'
-  }
+  condition: IfCondition
   body: ASTNode[]
   line?: number  // Source line number for debugging
 }
@@ -70,5 +83,10 @@ export interface NumberLiteralNode {
 export interface VariableReferenceNode {
   type: 'variable'
   name: string
+  line?: number  // Source line number for debugging
+}
+
+export interface DistanceToEndNode {
+  type: 'distance_to_end'
   line?: number  // Source line number for debugging
 }

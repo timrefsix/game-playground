@@ -140,4 +140,65 @@ describe('ASTExecutor', () => {
     expect(interpreter.completed).toBe(true)
     expect(interpreter.error).toBeNull()
   })
+
+  it('should evaluate distance-to-end expressions', () => {
+    const maze = [
+      [CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.END]
+    ]
+    const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
+
+    const code = `
+      (set steps (distance-to-end))
+      (repeat steps (forward))
+    `
+
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    const executor = new ASTExecutor(interpreter, ast)
+
+    // distance-to-end should return the number of steps remaining on the shortest path
+    expect(interpreter.getDistanceToGoal()).toBe(4)
+    let step = 1
+    while (executor.hasMore() && step <= 15) {
+      executor.executeStep()
+      step++
+    }
+
+    expect(interpreter.completed).toBe(true)
+    expect(interpreter.error).toBeNull()
+  })
+
+  it('should use closer conditions to choose a path', () => {
+    const maze = [
+      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
+      [CellType.WALL, CellType.START, CellType.EMPTY, CellType.WALL],
+      [CellType.WALL, CellType.EMPTY, CellType.EMPTY, CellType.WALL],
+      [CellType.WALL, CellType.EMPTY, CellType.END, CellType.WALL],
+      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
+    ]
+    const interpreter = new RobotInterpreter(maze, { x: 1, y: 1 }, Direction.EAST)
+
+    const code = `
+      (forward)
+      (if (closer right)
+        (turn right)
+        (forward)
+      )
+      (repeat 2 (forward))
+    `
+
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    const executor = new ASTExecutor(interpreter, ast)
+
+    let step = 1
+    while (executor.hasMore() && step <= 20) {
+      executor.executeStep()
+      step++
+    }
+
+    expect(interpreter.completed).toBe(true)
+    expect(interpreter.error).toBeNull()
+    expect(interpreter.pos).toEqual({ x: 2, y: 3 })
+  })
 })

@@ -9,7 +9,9 @@ import {
   CallNode,
   ExpressionNode,
   NumberLiteralNode,
-  VariableReferenceNode
+  VariableReferenceNode,
+  DistanceToEndNode,
+  IfCondition
 } from './AST'
 
 type TokenType = 'paren' | 'number' | 'symbol'
@@ -303,7 +305,7 @@ export class Parser {
     }
   }
 
-  private parseCondition(expr: Expression): { negated: boolean; direction: DirectionLiteral } {
+  private parseCondition(expr: Expression): IfCondition {
     if (expr.type !== 'list') {
       throw new Error(`Invalid condition at line ${expr.line}`)
     }
@@ -319,7 +321,12 @@ export class Parser {
 
     if (head.value === 'sensor') {
       const direction = this.parseDirection(expr.items.slice(1), head.line)
-      return { negated: false, direction }
+      return { type: 'sensor', negated: false, direction }
+    }
+
+    if (head.value === 'closer') {
+      const direction = this.parseDirection(expr.items.slice(1), head.line)
+      return { type: 'closer', negated: false, direction }
     }
 
     if (head.value === 'not') {
@@ -327,7 +334,7 @@ export class Parser {
         throw new Error(`not expects a single condition at line ${head.line}`)
       }
       const inner = this.parseCondition(expr.items[1])
-      return { negated: !inner.negated, direction: inner.direction }
+      return { ...inner, negated: !inner.negated }
     }
 
     throw new Error(`Unknown condition '${head.value}' at line ${head.line}`)
@@ -448,7 +455,38 @@ export class Parser {
       return this.createVariableReference(expr)
     }
 
+    if (expr.type === 'list') {
+      return this.createListExpression(expr)
+    }
+
     throw new Error(`${message} at line ${expr.line}`)
+  }
+
+  private createListExpression(expr: ListExpression): ExpressionNode {
+    if (expr.items.length === 0) {
+      throw new Error(`Empty expression at line ${expr.line}`)
+    }
+
+    const head = expr.items[0]
+    if (head.type !== 'symbol') {
+      throw new Error(`Expression must start with a symbol at line ${expr.line}`)
+    }
+
+    if (head.value === 'distance-to-end' || head.value === 'distance') {
+      if (expr.items.length !== 1) {
+        throw new Error(`distance-to-end does not take arguments at line ${head.line}`)
+      }
+      return this.createDistanceToEndNode(expr.line)
+    }
+
+    throw new Error(`Unknown expression '${head.value}' at line ${head.line}`)
+  }
+
+  private createDistanceToEndNode(line: number): DistanceToEndNode {
+    return {
+      type: 'distance_to_end',
+      line
+    }
   }
 
   private createNumberLiteral(expr: NumberExpression): NumberLiteralNode {

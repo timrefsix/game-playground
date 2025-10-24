@@ -185,6 +185,47 @@ test.describe('All Levels - Complete Solutions', () => {
     await expect(page.getByText('🎉 Level completed! Great job!')).toBeVisible({ timeout: 10000 })
   })
 
+  test('Level 6: Into the Unknown - Distance-guided solution', async ({ page }) => {
+    await page.getByRole('button', { name: 'Level 6' }).click()
+    await expect(page.getByRole('heading', { name: 'Into the Unknown' })).toBeVisible()
+
+    const editor = page.getByRole('textbox')
+    const solution = `(function step ()
+  (if (closer left)
+    (turn left)
+    (forward)
+  )
+  (if (not (closer left))
+    (if (closer front)
+      (forward)
+    )
+  )
+  (if (not (closer left))
+    (if (not (closer front))
+      (if (closer right)
+        (turn right)
+        (forward)
+      )
+    )
+  )
+  (if (not (closer left))
+    (if (not (closer front))
+      (if (not (closer right))
+        (turn right)
+        (turn right)
+        (forward)
+      )
+    )
+  )
+)
+(repeat 60 (step))`
+
+    await editor.fill(solution)
+    await page.getByRole('button', { name: 'Play' }).click()
+
+    await expect(page.getByText('🎉 Level completed! Great job!')).toBeVisible({ timeout: 20000 })
+  })
+
   test('All levels: Sequential completion', async ({ page }) => {
     // Complete all levels in sequence
     const levels = [
@@ -225,6 +266,12 @@ test.describe('All Levels - Complete Solutions', () => {
         name: 'Sensor Navigation',
         solution:
           '(forward)\n(forward)\n(turn right)\n(forward)\n(forward)\n(turn left)\n(forward)\n(forward)\n(turn right)\n(forward)\n(forward)\n(turn left)\n(forward)\n(forward)\n(turn right)\n(forward)\n(forward)\n(forward)'
+      },
+      {
+        level: 6,
+        name: 'Into the Unknown',
+        solution:
+          '(function step ()\n  (if (closer left)\n    (turn left)\n    (forward)\n  )\n  (if (not (closer left))\n    (if (closer front)\n      (forward)\n    )\n  )\n  (if (not (closer left))\n    (if (not (closer front))\n      (if (closer right)\n        (turn right)\n        (forward)\n      )\n    )\n  )\n  (if (not (closer left))\n    (if (not (closer front))\n      (if (not (closer right))\n        (turn right)\n        (turn right)\n        (forward)\n      )\n    )\n  )\n)\n(repeat 60 (step))'
       }
     ]
 
@@ -330,5 +377,12 @@ test.describe('All Levels - Complete Solutions', () => {
     await expect(
       page.getByText('(if (not (sensor direction)) ...) - Execute if no wall detected', { exact: true })
     ).toBeVisible()
+
+    // Level 6: Distance-based helpers
+    await page.getByRole('button', { name: 'Level 6' }).click()
+    await expect(
+      page.getByText('(if (closer direction) ...)', { exact: false })
+    ).toBeVisible()
+    await expect(page.getByText('(distance-to-end)', { exact: true })).toBeVisible()
   })
 })
