@@ -106,4 +106,26 @@ export const LEVELS: Level[] = [
     startDir: Direction.EAST,
     fogOfWar: true,
   },
+  {
+    id: 7,
+    name: "Foggy Loop",
+    description:
+      "The fog hides a looping corridor. Use distance tools to keep heading toward the goal! Try: if (closer direction) ...",
+    maze: [
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+      [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+      [1, 0, 0, 0, 1, 3, 0, 0, 0, 0, 1],
+      [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+      [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+      [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ],
+    startPos: { x: 1, y: 1 },
+    startDir: Direction.EAST,
+    fogOfWar: true,
+  },
 ]
