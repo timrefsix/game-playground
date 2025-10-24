@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "🤖 Maze Robot" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - button "Level 1" [ref=e7] [cursor=pointer]
+      - button "Level 2" [ref=e8] [cursor=pointer]
+      - button "Level 3" [ref=e9] [cursor=pointer]
+      - button "Level 4" [ref=e10] [cursor=pointer]
+      - button "Level 5" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Straight Line" [level=2] [ref=e15]
+        - paragraph [ref=e16]: Move the robot forward to reach the goal
+      - generic [ref=e34]: ▲
+      - generic [ref=e44]: 🎉 Level completed! Great job!
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - heading "Code" [level=3] [ref=e47]
+        - generic [ref=e48]:
+          - button "Play" [active] [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+          - button "Step" [ref=e52] [cursor=pointer]:
+            - img [ref=e53]
+          - button "Reset" [ref=e55] [cursor=pointer]:
+            - img [ref=e56]
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: "1"
+            - generic [ref=e63]: "2"
+            - generic [ref=e64]: "3"
+            - generic [ref=e65]: "4"
+          - 'textbox "# Write your commands here # Available commands: # forward (or move forward) # # Example: forward forward" [ref=e66]':
+            - /placeholder: "# Write your commands here\n# Available commands:\n#   forward (or move forward)\n#\n# Example:\nforward\nforward\n"
+            - text: forward forward forward forward
+        - generic [ref=e67]:
+          - heading "Available Commands:" [level=4] [ref=e68]
+          - list [ref=e69]:
+            - listitem [ref=e70]:
+              - code [ref=e71] [cursor=pointer]: forward
+              - text: "- Move one step forward"
+          - paragraph [ref=e72] [cursor=pointer]:
+            - text: "💡 Tip: Lines starting with # are comments"
+            - generic [ref=e73]: ✕
+          - paragraph [ref=e74] [cursor=pointer]:
+            - text: "✨ Tip: Click commands above to add them to your code"
+            - generic [ref=e75]: ✕
+```

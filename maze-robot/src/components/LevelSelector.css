@@ -1,0 +1,26 @@
+.level-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.level-selector button {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.level-selector button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.level-selector button.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}

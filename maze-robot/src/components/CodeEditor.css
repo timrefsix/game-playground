@@ -1,0 +1,172 @@
+.code-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.code-editor-container {
+  display: flex;
+  flex: 1;
+  background: #0f1419;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.line-numbers {
+  display: flex;
+  flex-direction: column;
+  background: #0a0d11;
+  padding: 1.5rem 0.5rem 1.5rem 1rem;
+  color: #5a6a7a;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  user-select: none;
+  border-right: 1px solid #1a1f2e;
+  min-width: 50px;
+  text-align: right;
+}
+
+.line-number {
+  position: relative;
+  padding-right: 0.5rem;
+  height: 21px;
+}
+
+.line-number.executing {
+  color: #667eea;
+  font-weight: bold;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.execution-pointer {
+  position: absolute;
+  left: -0.75rem;
+  color: #667eea;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.code-editor {
+  flex: 1;
+  background: #0f1419;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 0 0 12px 12px;
+  padding: 1.5rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+}
+
+.code-editor-container:has(.line-numbers) .code-editor {
+  border-radius: 0 0 12px 0;
+}
+
+.code-editor:focus {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+.code-editor::placeholder {
+  color: #5a6a7a;
+}
+
+.help {
+  background: #16213e;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.help h4 {
+  margin: 0 0 1rem 0;
+  color: #667eea;
+}
+
+.help ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.help li {
+  padding: 0.5rem 0;
+  color: #b0b0b0;
+}
+
+.help code {
+  background: #0f1419;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.help code.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.help code.clickable:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.help code.clickable:active {
+  transform: translateY(0);
+}
+
+.help .tip {
+  margin: 0 0 0.5rem 0;
+  padding: 0.75rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 3px solid #667eea;
+  border-radius: 4px;
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.help .tip:hover {
+  background: rgba(102, 126, 234, 0.15);
+  transform: translateX(2px);
+}
+
+.help .tip:last-child {
+  margin-bottom: 0;
+}
+
+.dismiss-icon {
+  opacity: 0;
+  color: #667eea;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.help .tip:hover .dismiss-icon {
+  opacity: 1;
+}

@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "🤖 Maze Robot" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - button "Level 1" [ref=e7] [cursor=pointer]
+      - button "Level 2" [ref=e8] [cursor=pointer]
+      - button "Level 3" [ref=e9] [cursor=pointer]
+      - button "Level 4" [ref=e10] [cursor=pointer]
+      - button "Level 5" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Straight Line" [level=2] [ref=e15]
+        - paragraph [ref=e16]: Move the robot forward to reach the goal
+      - generic [ref=e30]: ▲
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - heading "Code" [level=3] [ref=e46]
+        - generic [ref=e47]:
+          - button "Play" [ref=e48] [cursor=pointer]:
+            - img [ref=e49]
+          - button "Step" [ref=e51] [cursor=pointer]:
+            - img [ref=e52]
+          - button "Reset" [ref=e54] [cursor=pointer]:
+            - img [ref=e55]
+      - generic [ref=e58]:
+        - 'textbox "# Write your commands here # Available commands: # forward (or move forward) # # Example: forward forward" [ref=e60]':
+          - /placeholder: "# Write your commands here\n# Available commands:\n#   forward (or move forward)\n#\n# Example:\nforward\nforward\n"
+        - generic [ref=e61]:
+          - heading "Available Commands:" [level=4] [ref=e62]
+          - list [ref=e63]:
+            - listitem [ref=e64]:
+              - code [ref=e65] [cursor=pointer]: forward
+              - text: "- Move one step forward"
+          - paragraph [ref=e66] [cursor=pointer]:
+            - text: "💡 Tip: Lines starting with # are comments"
+            - generic [ref=e67]: ✕
+          - paragraph [ref=e68] [cursor=pointer]:
+            - text: "✨ Tip: Click commands above to add them to your code"
+            - generic [ref=e69]: ✕
+```
