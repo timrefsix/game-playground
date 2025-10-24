@@ -53,4 +53,64 @@ describe('Parser', () => {
     expect(ast.statements.length).toBe(1)
     expect(ast.statements[0].type).toBe('if')
   })
+
+  it('should parse set statements', () => {
+    const parser = new Parser('(set steps 3)')
+    const ast = parser.parse()
+    expect(ast.statements.length).toBe(1)
+    const statement = ast.statements[0]
+    expect(statement.type).toBe('set')
+    if (statement.type === 'set') {
+      expect(statement.name).toBe('steps')
+      expect(statement.value.type).toBe('number_literal')
+    }
+  })
+
+  it('should parse function definitions and calls', () => {
+    const code = `
+      (function walk (n)
+        (repeat n (forward))
+      )
+      (walk 2)
+    `
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    expect(ast.statements.length).toBe(2)
+    const functionNode = ast.statements[0]
+    const callNode = ast.statements[1]
+
+    expect(functionNode.type).toBe('function')
+    if (functionNode.type === 'function') {
+      expect(functionNode.name).toBe('walk')
+      expect(functionNode.params).toEqual(['n'])
+      expect(functionNode.body.length).toBe(1)
+    }
+
+    expect(callNode.type).toBe('call')
+    if (callNode.type === 'call') {
+      expect(callNode.name).toBe('walk')
+      expect(callNode.args.length).toBe(1)
+      expect(callNode.args[0].type).toBe('number_literal')
+    }
+  })
+
+  it('should parse explicit call syntax for backward compatibility', () => {
+    const code = `
+      (function walk (n)
+        (repeat n (forward))
+      )
+      (call walk 2)
+    `
+    const parser = new Parser(code)
+    const ast = parser.parse()
+
+    expect(ast.statements.length).toBe(2)
+    const callNode = ast.statements[1]
+    expect(callNode.type).toBe('call')
+    if (callNode.type === 'call') {
+      expect(callNode.name).toBe('walk')
+      expect(callNode.args.length).toBe(1)
+      expect(callNode.args[0].type).toBe('number_literal')
+    }
+  })
 })

@@ -297,6 +297,40 @@ describe('parseCode', () => {
       expect(commands).toEqual(['forward', 'turn left', 'forward', 'turn left'])
     })
   })
+
+  describe('variables and functions', () => {
+    it('should use variables in repeat counts', () => {
+      const code = `
+        (set steps 3)
+        (repeat steps (forward))
+      `
+      const commands = parseCode(code)
+      expect(commands).toEqual(['forward', 'forward', 'forward'])
+    })
+
+    it('should execute simple function calls', () => {
+      const code = `
+        (function walk (n)
+          (repeat n (forward))
+        )
+        (walk 2)
+      `
+      const commands = parseCode(code)
+      expect(commands).toEqual(['forward', 'forward'])
+    })
+
+    it('should pass variables as function arguments', () => {
+      const code = `
+        (function walk (n)
+          (repeat n (forward))
+        )
+        (set steps 2)
+        (walk steps)
+      `
+      const commands = parseCode(code)
+      expect(commands).toEqual(['forward', 'forward'])
+    })
+  })
 })
 
 describe('RobotInterpreter - Sensors', () => {

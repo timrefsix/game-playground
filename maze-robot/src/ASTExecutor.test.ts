@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { Parser } from './Parser'
 import { ASTExecutor } from './ASTExecutor'
 import { RobotInterpreter } from './RobotInterpreter'
+import { Parser } from './Parser'
 import { CellType, Direction } from './types'
 
 describe('ASTExecutor', () => {
@@ -86,5 +86,58 @@ describe('ASTExecutor', () => {
 
     expect(interpreter.completed).toBe(true)
     expect(interpreter.error).toBe(null)
+  })
+
+  it('should execute repeat counts from variables', () => {
+    const maze = [
+      [CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.END]
+    ]
+    const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
+
+    const code = `
+      (set steps 4)
+      (repeat steps (forward))
+    `
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    const executor = new ASTExecutor(interpreter, ast)
+
+    let step = 1
+    while (executor.hasMore() && step <= 10) {
+      executor.executeStep()
+      step++
+    }
+
+    expect(interpreter.pos.x).toBe(4)
+    expect(interpreter.completed).toBe(true)
+    expect(interpreter.error).toBeNull()
+  })
+
+  it('should execute function calls with parameters', () => {
+    const maze = [
+      [CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.END]
+    ]
+    const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
+
+    const code = `
+      (function walk (n)
+        (repeat n (forward))
+      )
+      (set steps 4)
+      (walk steps)
+    `
+    const parser = new Parser(code)
+    const ast = parser.parse()
+    const executor = new ASTExecutor(interpreter, ast)
+
+    let step = 1
+    while (executor.hasMore() && step <= 15) {
+      executor.executeStep()
+      step++
+    }
+
+    expect(interpreter.pos.x).toBe(4)
+    expect(interpreter.completed).toBe(true)
+    expect(interpreter.error).toBeNull()
   })
 })
