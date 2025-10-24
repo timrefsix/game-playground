@@ -13,14 +13,14 @@ test.describe('Level 2 - Simple Turn', () => {
 
   test('should complete level with correct solution', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill(`forward
-forward
-turn right
-forward
-forward
-turn left
-forward
-forward`)
+    await editor.fill(`(forward)
+(forward)
+(turn right)
+(forward)
+(forward)
+(turn left)
+(forward)
+(forward)`)
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -29,7 +29,7 @@ forward`)
 
   test('should fail with only forward commands', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward\nforward')
+    await editor.fill('(forward)\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -39,7 +39,7 @@ forward`)
   test('should handle turns correctly', async ({ page }) => {
     const editor = page.getByRole('textbox')
     // Move forward twice, turn right - these are all valid moves
-    await editor.fill('forward\nforward\nturn right')
+    await editor.fill('(forward)\n(forward)\n(turn right)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -50,14 +50,14 @@ forward`)
 
   test('should navigate to Level 3 after completion', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill(`forward
-forward
-turn right
-forward
-forward
-turn left
-forward
-forward`)
+    await editor.fill(`(forward)
+(forward)
+(turn right)
+(forward)
+(forward)
+(turn left)
+(forward)
+(forward)`)
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -70,7 +70,7 @@ forward`)
 
   test('should reset code when switching levels', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward')
+    await editor.fill('(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Level 1' }).click()
 

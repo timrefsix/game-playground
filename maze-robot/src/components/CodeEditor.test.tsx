@@ -12,7 +12,7 @@ describe('CodeEditor', () => {
   })
 
   it('should display current code value', () => {
-    const code = 'forward\nturn left'
+    const code = '(forward)\n(turn left)'
     render(<CodeEditor code={code} onChange={() => {}} />)
 
     const textarea = screen.getByRole('textbox')
@@ -26,7 +26,7 @@ describe('CodeEditor', () => {
     render(<CodeEditor code="" onChange={onChange} />)
 
     const textarea = screen.getByRole('textbox')
-    await user.type(textarea, 'forward')
+    await user.type(textarea, '(forward)')
 
     expect(onChange).toHaveBeenCalled()
   })
@@ -41,55 +41,55 @@ describe('CodeEditor', () => {
   it('should display tip about comments', () => {
     render(<CodeEditor code="" onChange={() => {}} />)
 
-    expect(screen.getByText(/Lines starting with # are comments/)).toBeInTheDocument()
+    expect(screen.getByText(/Lines starting with ;, #, or \/\//)).toBeInTheDocument()
   })
 
   describe('Level-specific commands', () => {
     it('should show only forward on level 1', () => {
       render(<CodeEditor code="" onChange={() => {}} currentLevel={1} />)
 
-      expect(screen.getByText('forward')).toBeInTheDocument()
-      expect(screen.queryByText('turn left')).not.toBeInTheDocument()
-      expect(screen.queryByText('turn right')).not.toBeInTheDocument()
+      expect(screen.getByText('(forward)')).toBeInTheDocument()
+      expect(screen.queryByText('(turn left)')).not.toBeInTheDocument()
+      expect(screen.queryByText('(turn right)')).not.toBeInTheDocument()
     })
 
     it('should show forward and turning commands on level 2', () => {
       render(<CodeEditor code="" onChange={() => {}} currentLevel={2} />)
 
-      expect(screen.getByText('forward')).toBeInTheDocument()
-      expect(screen.getByText('turn left')).toBeInTheDocument()
-      expect(screen.getByText('turn right')).toBeInTheDocument()
-      expect(screen.queryByText(/repeat N/)).not.toBeInTheDocument()
+      expect(screen.getByText('(forward)')).toBeInTheDocument()
+      expect(screen.getByText('(turn left)')).toBeInTheDocument()
+      expect(screen.getByText('(turn right)')).toBeInTheDocument()
+      expect(screen.queryByText(/\(repeat N/)).not.toBeInTheDocument()
     })
 
     it('should show forward and turning commands on level 3', () => {
       render(<CodeEditor code="" onChange={() => {}} currentLevel={3} />)
 
-      expect(screen.getByText('forward')).toBeInTheDocument()
-      expect(screen.getByText('turn left')).toBeInTheDocument()
-      expect(screen.getByText('turn right')).toBeInTheDocument()
-      expect(screen.queryByText(/repeat N/)).not.toBeInTheDocument()
+      expect(screen.getByText('(forward)')).toBeInTheDocument()
+      expect(screen.getByText('(turn left)')).toBeInTheDocument()
+      expect(screen.getByText('(turn right)')).toBeInTheDocument()
+      expect(screen.queryByText(/\(repeat N/)).not.toBeInTheDocument()
     })
 
     it('should show repeat command starting from level 4', () => {
       render(<CodeEditor code="" onChange={() => {}} currentLevel={4} />)
 
-      expect(screen.getByText('forward')).toBeInTheDocument()
-      expect(screen.getByText('turn left')).toBeInTheDocument()
-      expect(screen.getByText('turn right')).toBeInTheDocument()
-      expect(screen.getByText(/repeat N/)).toBeInTheDocument()
-      expect(screen.queryByText(/if sensor/)).not.toBeInTheDocument()
+      expect(screen.getByText('(forward)')).toBeInTheDocument()
+      expect(screen.getByText('(turn left)')).toBeInTheDocument()
+      expect(screen.getByText('(turn right)')).toBeInTheDocument()
+      expect(screen.getByText(/\(repeat N/)).toBeInTheDocument()
+      expect(screen.queryByText(/\(if \(sensor/)).not.toBeInTheDocument()
     })
 
     it('should show sensor commands starting from level 5', () => {
       render(<CodeEditor code="" onChange={() => {}} currentLevel={5} />)
 
-      expect(screen.getByText('forward')).toBeInTheDocument()
-      expect(screen.getByText('turn left')).toBeInTheDocument()
-      expect(screen.getByText('turn right')).toBeInTheDocument()
-      expect(screen.getByText(/repeat N/)).toBeInTheDocument()
-      expect(screen.getAllByText(/if sensor/).length).toBeGreaterThan(0)
-      expect(screen.getByText(/if not sensor/)).toBeInTheDocument()
+      expect(screen.getByText('(forward)')).toBeInTheDocument()
+      expect(screen.getByText('(turn left)')).toBeInTheDocument()
+      expect(screen.getByText('(turn right)')).toBeInTheDocument()
+      expect(screen.getByText(/\(repeat N/)).toBeInTheDocument()
+      expect(screen.getAllByText(/\(if \(sensor/).length).toBeGreaterThan(0)
+      expect(screen.getByText(/\(if \(not \(sensor/)).toBeInTheDocument()
     })
 
     it('should only show sensor tip on level 5+', () => {
@@ -107,7 +107,7 @@ describe('CodeEditor', () => {
     render(<CodeEditor code="" onChange={() => {}} />)
 
     // Verify tip is initially visible
-    const tip = screen.getByText(/Lines starting with # are comments/)
+    const tip = screen.getByText(/Lines starting with ;, #, or \/\//)
     expect(tip).toBeInTheDocument()
 
     // Click to dismiss
@@ -123,7 +123,7 @@ describe('CodeEditor', () => {
     render(<CodeEditor code="" onChange={() => {}} currentLevel={5} />)
 
     // Verify all tips are initially visible
-    const commentsTip = screen.getByText(/Lines starting with # are comments/)
+    const commentsTip = screen.getByText(/Lines starting with ;, #, or \/\//)
     const sensorsTip = screen.getByText(/Use sensors to detect walls/)
     const clickCommandsTip = screen.getByText(/Click commands above/)
 

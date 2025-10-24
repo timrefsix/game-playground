@@ -1,4 +1,6 @@
 import { Maze, Position, Direction, CellType } from './types'
+import { Parser } from './Parser'
+import { ASTNode, BlockNode, CommandNode } from './AST'
 
 export class RobotInterpreter {
   private maze: Maze
@@ -120,132 +122,58 @@ export class RobotInterpreter {
 
 // Parse code into commands, expanding repeat blocks and conditionals
 export function parseCode(code: string, interpreter?: RobotInterpreter): string[] {
-  const lines = code
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line && !line.startsWith('#') && !line.startsWith('//'))
+  if (!code.trim()) {
+    return []
+  }
 
+  const parser = new Parser(code)
+  const ast = parser.parse()
+  return flattenAST(ast, interpreter)
+}
+
+function flattenAST(ast: BlockNode, interpreter?: RobotInterpreter): string[] {
   const commands: string[] = []
-  let i = 0
 
-  while (i < lines.length) {
-    const line = lines[i]
-
-    // Check for repeat command: "repeat N {" or "repeat N"
-    const repeatMatch = line.match(/^repeat\s+(\d+)\s*\{?$/)
-
-    // Check for if command: "if sensor direction {" or "if not sensor direction {"
-    const ifMatch = line.match(/^if\s+(not\s+)?sensor\s+(front|back|left|right)\s*\{?$/)
-
-    if (repeatMatch) {
-      const count = parseInt(repeatMatch[1], 10)
-      const repeatCommands: string[] = []
-      i++
-
-      // Find all commands until closing brace or end
-      let braceCount = line.includes('{') ? 1 : 0
-
-      while (i < lines.length) {
-        const currentLine = lines[i]
-
-        // Check for closing brace
-        if (currentLine === '}' && braceCount > 0) {
-          braceCount--
-          i++
+  const walk = (node: ASTNode) => {
+    switch (node.type) {
+      case 'command':
+        commands.push(mapCommand(node))
+        break
+      case 'repeat':
+        for (let i = 0; i < node.count; i++) {
+          node.body.forEach(walk)
+        }
+        break
+      case 'if':
+        if (!interpreter) {
+          node.body.forEach(walk)
           break
         }
-
-        // Check for opening brace
-        if (currentLine.includes('{')) {
-          braceCount++
-        }
-
-        // If no braces mode and we hit another repeat or unindented line, break
-        if (braceCount === 0 && (currentLine.startsWith('repeat') || !currentLine.startsWith(' '))) {
-          break
-        }
-
-        // Add command if it's not empty
-        if (currentLine && currentLine !== '{' && currentLine !== '}') {
-          repeatCommands.push(currentLine)
-        }
-
-        i++
-      }
-
-      // Expand the repeat block
-      // Check if the repeat contains conditionals
-      const hasConditionals = repeatCommands.some(cmd =>
-        /^if\s+(not\s+)?sensor\s+(front|back|left|right)\s*\{?$/.test(cmd)
-      )
-
-      if (hasConditionals) {
-        // If there are conditionals, we need special handling
-        // Return special repeat markers that will be expanded during execution
-        for (let j = 0; j < count; j++) {
-          commands.push(`__REPEAT_ITERATION_START__`)
-          commands.push(...repeatCommands)
-          commands.push(`__REPEAT_ITERATION_END__`)
-        }
-      } else {
-        // No conditionals, safe to expand normally
-        for (let j = 0; j < count; j++) {
-          // Recursively parse the repeat body to handle nested structures
-          const repeatBodyCode = repeatCommands.join('\n')
-          const parsedRepeatBody = parseCode(repeatBodyCode, interpreter)
-          commands.push(...parsedRepeatBody)
-        }
-      }
-    } else if (ifMatch) {
-      const isNot = !!ifMatch[1]
-      const direction = ifMatch[2]
-      const conditionalCommands: string[] = []
-      i++
-
-      // Find all commands until closing brace
-      let braceCount = line.includes('{') ? 1 : 0
-
-      while (i < lines.length) {
-        const currentLine = lines[i]
-
-        // Check for closing brace
-        if (currentLine === '}' && braceCount > 0) {
-          braceCount--
-          i++
-          break
-        }
-
-        // Check for opening brace
-        if (currentLine.includes('{')) {
-          braceCount++
-        }
-
-        // Add command if it's not empty
-        if (currentLine && currentLine !== '{' && currentLine !== '}') {
-          conditionalCommands.push(currentLine)
-        }
-
-        i++
-      }
-
-      // Evaluate condition using interpreter if provided
-      if (interpreter) {
-        const sensorResult = interpreter.sensor(direction)
-        const condition = isNot ? !sensorResult : sensorResult
-
-        // Only add commands if condition is true
+        const sensorResult = interpreter.sensor(node.condition.direction)
+        const condition = node.condition.negated ? !sensorResult : sensorResult
         if (condition) {
-          commands.push(...conditionalCommands)
+          node.body.forEach(walk)
         }
-      } else {
-        // If no interpreter, add commands anyway (for static analysis)
-        commands.push(...conditionalCommands)
-      }
-    } else {
-      commands.push(line)
-      i++
+        break
+      case 'block':
+        node.statements.forEach(walk)
+        break
     }
   }
 
+  ast.statements.forEach(walk)
   return commands
+}
+
+function mapCommand(node: CommandNode): string {
+  switch (node.command) {
+    case 'forward':
+      return 'forward'
+    case 'turn_left':
+      return 'turn left'
+    case 'turn_right':
+      return 'turn right'
+    default:
+      return node.command
+  }
 }
