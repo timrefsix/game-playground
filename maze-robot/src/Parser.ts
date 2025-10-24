@@ -459,6 +459,10 @@ export class Parser {
       return this.createListExpression(expr)
     }
 
+    return this.throwUnexpectedExpression(expr, message)
+  }
+
+  private throwUnexpectedExpression(expr: Expression, message: string): never {
     throw new Error(`${message} at line ${expr.line}`)
   }
 
