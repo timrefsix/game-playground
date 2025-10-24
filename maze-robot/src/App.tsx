@@ -11,6 +11,8 @@ import { ASTExecutor } from './ASTExecutor'
 import { LEVELS } from './levels'
 import './App.css'
 
+const EXECUTION_INTERVAL = import.meta.env.VITE_TEST_FAST === 'true' ? 50 : 500
+
 function App() {
   const [currentLevel, setCurrentLevel] = useState(0)
   const [code, setCode] = useState('')
@@ -19,6 +21,7 @@ function App() {
   const [_executionStep, setExecutionStep] = useState(0)
   const [currentExecutingLine, setCurrentExecutingLine] = useState<number>(-1)
   const [message, setMessage] = useState('')
+  const [hasCompleted, setHasCompleted] = useState(false)
   const intervalRef = useRef<number | null>(null)
   const executorRef = useRef<ASTExecutor | null>(null)
 
@@ -42,6 +45,7 @@ function App() {
     setExecutionStep(0)
     setCurrentExecutingLine(-1)
     setMessage('')
+    setHasCompleted(false)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -66,6 +70,7 @@ function App() {
         executorRef.current = new ASTExecutor(interpreter, ast)
       } catch (error) {
         setMessage(`❌ Error parsing code: ${error}`)
+        setHasCompleted(false)
         setIsPlaying(false)
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
@@ -88,6 +93,7 @@ function App() {
         intervalRef.current = null
       }
       setMessage(`❌ Error: ${interpreter.error}`)
+      setHasCompleted(false)
       return
     }
 
@@ -98,6 +104,7 @@ function App() {
         intervalRef.current = null
       }
       setMessage('🎉 Level completed! Great job!')
+      setHasCompleted(true)
       return
     }
 
@@ -109,6 +116,7 @@ function App() {
       }
       if (!interpreter.completed && !interpreter.error) {
         setMessage("⚠️ Didn't reach the goal. Try again!")
+        setHasCompleted(false)
       }
       return
     }
@@ -130,7 +138,7 @@ function App() {
       setMessage('')
 
       setIsPlaying(true)
-      intervalRef.current = window.setInterval(executeStep, 500)
+      intervalRef.current = window.setInterval(executeStep, EXECUTION_INTERVAL)
     }
   }
 
@@ -186,8 +194,8 @@ function App() {
           {message && (
             <Message
               text={message}
-              isSuccess={interpreter.completed}
-              showNextLevel={interpreter.completed && currentLevel < LEVELS.length - 1}
+              isSuccess={hasCompleted}
+              showNextLevel={hasCompleted && currentLevel < LEVELS.length - 1}
               onNextLevel={nextLevel}
             />
           )}
