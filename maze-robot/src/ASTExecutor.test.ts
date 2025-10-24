@@ -7,7 +7,7 @@ import { CellType, Direction } from './types'
 describe('ASTExecutor', () => {
   it('should execute simple forward commands', () => {
     const maze = [
-      [CellType.START, CellType.PATH, CellType.PATH, CellType.END, CellType.WALL]
+      [CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.END, CellType.WALL]
     ]
     const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
 
@@ -30,9 +30,9 @@ describe('ASTExecutor', () => {
     // Level 2 maze (actual maze from levels.ts)
     const maze = [
       [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
-      [CellType.WALL, CellType.START, CellType.PATH, CellType.PATH, CellType.WALL, CellType.WALL, CellType.WALL],
-      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.PATH, CellType.WALL, CellType.WALL, CellType.WALL],
-      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.PATH, CellType.PATH, CellType.END, CellType.WALL],
+      [CellType.WALL, CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.WALL, CellType.WALL, CellType.WALL],
+      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.EMPTY, CellType.WALL, CellType.WALL, CellType.WALL],
+      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.EMPTY, CellType.EMPTY, CellType.END, CellType.WALL],
       [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
     ]
     const interpreter = new RobotInterpreter(maze, { x: 1, y: 1 }, Direction.EAST)
@@ -52,7 +52,7 @@ forward`
     // Execute all steps
     let step = 1
     while (executor.hasMore() && step <= 20) {
-      const result = executor.executeStep()
+      executor.executeStep()
       if (interpreter.error) {
         console.log(`Error at step ${step}: ${interpreter.error}`)
         console.log(`Robot position: (${interpreter.pos.x}, ${interpreter.pos.y}), direction: ${interpreter.dir}`)
@@ -67,7 +67,7 @@ forward`
 
   it('should handle repeat blocks', () => {
     const maze = [
-      [CellType.START, CellType.PATH, CellType.PATH, CellType.END, CellType.WALL]
+      [CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.END, CellType.WALL]
     ]
     const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
 

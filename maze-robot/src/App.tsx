@@ -78,6 +78,9 @@ function App() {
     // Execute one step
     const result = executorRef.current.executeStep()
 
+    // Update the current executing line for visual feedback
+    setCurrentExecutingLine(result.line ?? -1)
+
     if (interpreter.error) {
       setIsPlaying(false)
       if (intervalRef.current) {

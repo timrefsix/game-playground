@@ -9,10 +9,10 @@ describe('Level 3 Debug', () => {
     // Level 3 maze from levels.ts
     const maze = [
       [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
-      [CellType.WALL, CellType.START, CellType.PATH, CellType.PATH, CellType.PATH, CellType.PATH, CellType.WALL],
-      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.PATH, CellType.WALL],
-      [CellType.WALL, CellType.PATH, CellType.PATH, CellType.PATH, CellType.PATH, CellType.PATH, CellType.WALL],
-      [CellType.WALL, CellType.PATH, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
+      [CellType.WALL, CellType.START, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.WALL],
+      [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.EMPTY, CellType.WALL],
+      [CellType.WALL, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.EMPTY, CellType.WALL],
+      [CellType.WALL, CellType.EMPTY, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
       [CellType.WALL, CellType.END, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
       [CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL, CellType.WALL],
     ]
@@ -48,7 +48,7 @@ forward`
 
     let step = 1
     while (executor.hasMore() && step <= 30) {
-      const result = executor.executeStep()
+      executor.executeStep()
       console.log(`Step ${step}: pos (${interpreter.pos.x}, ${interpreter.pos.y}), dir ${interpreter.dir}`)
       if (interpreter.error) {
         console.log(`Error at step ${step}: ${interpreter.error}`)

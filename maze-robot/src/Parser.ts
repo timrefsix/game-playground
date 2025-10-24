@@ -2,14 +2,23 @@ import { ASTNode, CommandNode, RepeatNode, IfNode, BlockNode } from './AST'
 
 export class Parser {
   private lines: string[]
+  private lineNumbers: number[]  // Maps filtered line index to original line number
   private currentIndex: number
 
   constructor(code: string) {
-    // Preprocess code: split into lines, trim, remove comments and empty lines
-    this.lines = code
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line && !line.startsWith('#') && !line.startsWith('//'))
+    // Preprocess code: split into lines, track original line numbers
+    const allLines = code.split('\n')
+    this.lines = []
+    this.lineNumbers = []
+
+    allLines.forEach((line, index) => {
+      const trimmed = line.trim()
+      if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//')) {
+        this.lines.push(trimmed)
+        this.lineNumbers.push(index + 1)  // 1-based line numbers
+      }
+    })
+
     this.currentIndex = 0
   }
 
@@ -62,16 +71,17 @@ export class Parser {
   }
 
   private parseCommand(line: string): CommandNode | null {
+    const lineNumber = this.lineNumbers[this.currentIndex]
     this.currentIndex++
 
     const cmd = line.toLowerCase().trim()
 
     if (cmd === 'forward' || cmd === 'move forward' || cmd === 'move') {
-      return { type: 'command', command: 'forward' }
+      return { type: 'command', command: 'forward', line: lineNumber }
     } else if (cmd === 'turn left' || cmd === 'left') {
-      return { type: 'command', command: 'turn_left' }
+      return { type: 'command', command: 'turn_left', line: lineNumber }
     } else if (cmd === 'turn right' || cmd === 'right') {
-      return { type: 'command', command: 'turn_right' }
+      return { type: 'command', command: 'turn_right', line: lineNumber }
     }
 
     // Unknown command - throw error
@@ -79,6 +89,7 @@ export class Parser {
   }
 
   private parseRepeat(count: number, hasBrace: boolean): RepeatNode {
+    const lineNumber = this.lineNumbers[this.currentIndex]
     this.currentIndex++
 
     const body: ASTNode[] = []
@@ -120,10 +131,11 @@ export class Parser {
       }
     }
 
-    return { type: 'repeat', count, body }
+    return { type: 'repeat', count, body, line: lineNumber }
   }
 
   private parseIf(negated: boolean, direction: 'front' | 'back' | 'left' | 'right', hasBrace: boolean): IfNode {
+    const lineNumber = this.lineNumbers[this.currentIndex]
     this.currentIndex++
 
     const body: ASTNode[] = []
@@ -163,7 +175,8 @@ export class Parser {
     return {
       type: 'if',
       condition: { negated, direction },
-      body
+      body,
+      line: lineNumber
     }
   }
 }

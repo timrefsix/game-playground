@@ -9,12 +9,14 @@ export type ASTNode =
 export interface CommandNode {
   type: 'command'
   command: 'forward' | 'turn_left' | 'turn_right'
+  line?: number  // Source line number for debugging
 }
 
 export interface RepeatNode {
   type: 'repeat'
   count: number
   body: ASTNode[]
+  line?: number  // Source line number for debugging
 }
 
 export interface IfNode {
@@ -24,6 +26,7 @@ export interface IfNode {
     direction: 'front' | 'back' | 'left' | 'right'
   }
   body: ASTNode[]
+  line?: number  // Source line number for debugging
 }
 
 export interface BlockNode {

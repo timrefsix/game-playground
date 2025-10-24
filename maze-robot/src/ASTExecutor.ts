@@ -20,27 +20,28 @@ export class ASTExecutor {
 
   // Execute one command step
   // Returns true if there are more steps, false if done
-  executeStep(): { hasMore: boolean; command?: string } {
+  executeStep(): { hasMore: boolean; command?: string; line?: number } {
     if (this.interpreter.error || this.interpreter.completed) {
       return { hasMore: false }
     }
 
     // Get the next executable command
-    const command = this.getNextCommand()
-    if (!command) {
+    const result = this.getNextCommand()
+    if (!result || !result.command) {
       return { hasMore: false }
     }
 
     // Execute the command
-    this.interpreter.execute(command)
+    this.interpreter.execute(result.command)
 
     return {
       hasMore: !this.interpreter.error && !this.interpreter.completed,
-      command
+      command: result.command,
+      line: result.line
     }
   }
 
-  private getNextCommand(): string | null {
+  private getNextCommand(): { command: string; line?: number } | null {
     while (this.context.nodeStack.length > 0) {
       const current = this.context.nodeStack[this.context.nodeStack.length - 1]
 
@@ -65,14 +66,21 @@ export class ASTExecutor {
         this.context.nodeStack.pop()
 
         // Map command to string
+        let command: string
         switch (cmd.command) {
           case 'forward':
-            return 'forward'
+            command = 'forward'
+            break
           case 'turn_left':
-            return 'turn left'
+            command = 'turn left'
+            break
           case 'turn_right':
-            return 'turn right'
+            command = 'turn right'
+            break
+          default:
+            command = ''
         }
+        return { command, line: cmd.line }
       }
 
       if (current.node.type === 'repeat') {
