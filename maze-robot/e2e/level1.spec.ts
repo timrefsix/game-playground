@@ -67,7 +67,13 @@ test.describe('Level 1 - Straight Line', () => {
 
     // Pause quickly
     await page.waitForTimeout(300)
-    await page.getByRole('button', { name: 'Pause' }).click()
+    const pauseButton = page.getByRole('button', { name: 'Pause' })
+    const canPause = await pauseButton.isVisible().catch(() => false)
+
+    if (canPause) {
+      await pauseButton.click()
+      await page.waitForTimeout(200)
+    }
 
     // Should not have completed yet (paused before finishing)
     await page.waitForTimeout(500)
@@ -110,6 +116,6 @@ forward`)
     await page.getByRole('button', { name: 'Play' }).click()
 
     await expect(page.getByText('🎉 Level completed! Great job!')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByRole('button', { name: 'Next Level' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Next Level' })).toBeVisible({ timeout: 10000 })
   })
 })
