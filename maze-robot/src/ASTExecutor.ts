@@ -1,9 +1,27 @@
-import { ASTNode, BlockNode, CommandNode, RepeatNode, IfNode } from './AST'
+import {
+  ASTNode,
+  BlockNode,
+  CommandNode,
+  RepeatNode,
+  IfNode,
+  SetNode,
+  FunctionNode,
+  CallNode,
+  ExpressionNode
+} from './AST'
 import { RobotInterpreter } from './RobotInterpreter'
 
+interface ExecutionFrame {
+  node: ASTNode
+  index: number
+  countValue?: number
+  envDepth?: number
+}
+
 interface ExecutionContext {
-  nodeStack: { node: ASTNode; index: number }[]
-  repeatStack: { count: number; iteration: number; body: ASTNode[] }[]
+  nodeStack: ExecutionFrame[]
+  functions: Map<string, FunctionNode>
+  envStack: Map<string, number>[]
 }
 
 export class ASTExecutor {
@@ -14,8 +32,11 @@ export class ASTExecutor {
     this.interpreter = interpreter
     this.context = {
       nodeStack: [{ node: ast, index: 0 }],
-      repeatStack: []
+      functions: new Map(),
+      envStack: [new Map()]
     }
+
+    this.collectFunctions(ast)
   }
 
   // Execute one command step
@@ -50,6 +71,11 @@ export class ASTExecutor {
         if (current.index >= block.statements.length) {
           // Block finished, pop it
           this.context.nodeStack.pop()
+          if (typeof current.envDepth === 'number') {
+            while (this.context.envStack.length > current.envDepth) {
+              this.context.envStack.pop()
+            }
+          }
           continue
         }
 
@@ -86,19 +112,30 @@ export class ASTExecutor {
       if (current.node.type === 'repeat') {
         const repeat = current.node as RepeatNode
 
-        // Check if we need to start a new iteration
-        if (current.index < repeat.count) {
-          // Start this iteration
-          current.index++
+        if (typeof current.countValue === 'undefined') {
+          try {
+            const evaluatedCount = this.evaluateExpression(repeat.count)
+            if (evaluatedCount < 0) {
+              this.interpreter.error = `repeat count must be non-negative at line ${repeat.line ?? 'unknown'}`
+              return null
+            }
+            current.countValue = Math.floor(evaluatedCount)
+          } catch (error) {
+            this.interpreter.error = this.formatError(error)
+            return null
+          }
+        }
 
-          // Push the body as a new block
+        const limit = current.countValue ?? 0
+
+        if (current.index < limit) {
+          current.index++
           this.context.nodeStack.push({
             node: { type: 'block', statements: repeat.body },
             index: 0
           })
           continue
         } else {
-          // Repeat finished, pop it
           this.context.nodeStack.pop()
           continue
         }
@@ -124,6 +161,65 @@ export class ASTExecutor {
         continue
       }
 
+      if (current.node.type === 'set') {
+        const setNode = current.node as SetNode
+        this.context.nodeStack.pop()
+        try {
+          const value = this.evaluateExpression(setNode.value)
+          this.assignVariable(setNode.name, value)
+        } catch (error) {
+          this.interpreter.error = this.formatError(error)
+          return null
+        }
+        continue
+      }
+
+      if (current.node.type === 'function') {
+        const funcNode = current.node as FunctionNode
+        this.context.functions.set(funcNode.name, funcNode)
+        this.context.nodeStack.pop()
+        continue
+      }
+
+      if (current.node.type === 'call') {
+        const callNode = current.node as CallNode
+        this.context.nodeStack.pop()
+
+        const functionDefinition = this.context.functions.get(callNode.name)
+        if (!functionDefinition) {
+          this.interpreter.error = `Unknown function '${callNode.name}' at line ${callNode.line ?? 'unknown'}`
+          return null
+        }
+
+        let argValues: number[]
+        try {
+          argValues = callNode.args.map(arg => this.evaluateExpression(arg))
+        } catch (error) {
+          this.interpreter.error = this.formatError(error)
+          return null
+        }
+
+        if (argValues.length !== functionDefinition.params.length) {
+          this.interpreter.error = `Function '${functionDefinition.name}' expected ${functionDefinition.params.length} argument(s) but received ${argValues.length}`
+          return null
+        }
+
+        const envDepthBeforeCall = this.context.envStack.length
+        const newEnv = new Map<string, number>()
+        this.context.envStack.push(newEnv)
+
+        functionDefinition.params.forEach((param, index) => {
+          newEnv.set(param, argValues[index])
+        })
+
+        this.context.nodeStack.push({
+          node: { type: 'block', statements: functionDefinition.body },
+          index: 0,
+          envDepth: envDepthBeforeCall
+        })
+        continue
+      }
+
       // Unknown node type, skip it
       this.context.nodeStack.pop()
     }
@@ -134,5 +230,52 @@ export class ASTExecutor {
   // Check if there are more commands to execute
   hasMore(): boolean {
     return this.context.nodeStack.length > 0 && !this.interpreter.error && !this.interpreter.completed
+  }
+
+  private evaluateExpression(expr: ExpressionNode): number {
+    if (expr.type === 'number_literal') {
+      return expr.value
+    }
+
+    if (expr.type === 'variable') {
+      const value = this.lookupVariable(expr.name)
+      if (typeof value === 'undefined') {
+        throw new Error(`Undefined variable '${expr.name}' at line ${expr.line ?? 'unknown'}`)
+      }
+      return value
+    }
+
+    throw new Error('Unsupported expression')
+  }
+
+  private assignVariable(name: string, value: number): void {
+    const currentEnv = this.context.envStack[this.context.envStack.length - 1]
+    currentEnv.set(name, value)
+  }
+
+  private lookupVariable(name: string): number | undefined {
+    for (let i = this.context.envStack.length - 1; i >= 0; i--) {
+      const env = this.context.envStack[i]
+      if (env.has(name)) {
+        return env.get(name)
+      }
+    }
+    return undefined
+  }
+
+  private collectFunctions(ast: BlockNode): void {
+    for (const statement of ast.statements) {
+      if (statement.type === 'function') {
+        const functionNode = statement as FunctionNode
+        this.context.functions.set(functionNode.name, functionNode)
+      }
+    }
+  }
+
+  private formatError(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message
+    }
+    return String(error)
   }
 }

@@ -1,4 +1,16 @@
-import { ASTNode, BlockNode, CommandNode, RepeatNode, IfNode } from './AST'
+import {
+  ASTNode,
+  BlockNode,
+  CommandNode,
+  RepeatNode,
+  IfNode,
+  SetNode,
+  FunctionNode,
+  CallNode,
+  ExpressionNode,
+  NumberLiteralNode,
+  VariableReferenceNode
+} from './AST'
 
 type TokenType = 'paren' | 'number' | 'symbol'
 
@@ -212,8 +224,18 @@ export class Parser {
         return this.createRepeatNode(rest, head.line)
       case 'if':
         return this.createIfNode(rest, head.line)
+      case 'set':
+      case 'let':
+        return this.createSetNode(rest, head.line)
+      case 'function':
+      case 'def':
+      case 'define':
+      case 'func':
+        return this.createFunctionNode(rest, head.line)
+      case 'call':
+        return this.createCallNode(rest, head.line)
       default:
-        throw new Error(`Unknown expression '${head.value}' at line ${head.line}`)
+        return this.createImplicitCallNode(head, rest)
     }
   }
 
@@ -250,20 +272,14 @@ export class Parser {
     }
 
     const countExpr = rest[0]
-    if (countExpr.type !== 'number') {
-      throw new Error(`repeat count must be a number at line ${countExpr.line}`)
-    }
-
-    if (countExpr.value < 0) {
-      throw new Error(`repeat count must be non-negative at line ${countExpr.line}`)
-    }
+    const count = this.createExpressionNode(countExpr, 'repeat count must be a number or variable')
 
     const bodyExpressions = rest.slice(1)
     const body: ASTNode[] = bodyExpressions.map(expr => this.transformExpression(expr))
 
     return {
       type: 'repeat',
-      count: countExpr.value,
+      count,
       body,
       line
     }
@@ -333,6 +349,126 @@ export class Parser {
     }
 
     return direction
+  }
+
+  private createSetNode(rest: Expression[], line: number): SetNode {
+    if (rest.length < 2) {
+      throw new Error(`set requires a variable name and value at line ${line}`)
+    }
+
+    const nameExpr = rest[0]
+    if (nameExpr.type !== 'symbol') {
+      throw new Error(`set requires a variable name at line ${nameExpr.line}`)
+    }
+
+    const valueExpr = rest[1]
+    const value = this.createExpressionNode(valueExpr, 'set value must be a number or variable')
+
+    return {
+      type: 'set',
+      name: nameExpr.value,
+      value,
+      line
+    }
+  }
+
+  private createFunctionNode(rest: Expression[], line: number): FunctionNode {
+    if (rest.length < 2) {
+      throw new Error(`function requires a name and parameter list at line ${line}`)
+    }
+
+    const nameExpr = rest[0]
+    if (nameExpr.type !== 'symbol') {
+      throw new Error(`function name must be a symbol at line ${nameExpr.line}`)
+    }
+
+    const paramsExpr = rest[1]
+    if (paramsExpr.type !== 'list') {
+      throw new Error(`function parameters must be a list at line ${paramsExpr.line}`)
+    }
+
+    const params: string[] = paramsExpr.items.map(param => {
+      if (param.type !== 'symbol') {
+        throw new Error(`function parameter must be a symbol at line ${param.line}`)
+      }
+      return param.value
+    })
+
+    const bodyExpressions = rest.slice(2)
+    const body = bodyExpressions.map(expr => this.transformExpression(expr))
+
+    return {
+      type: 'function',
+      name: nameExpr.value,
+      params,
+      body,
+      line
+    }
+  }
+
+  private createCallNode(rest: Expression[], line: number): CallNode {
+    if (rest.length === 0) {
+      throw new Error(`call requires a function name at line ${line}`)
+    }
+
+    const nameExpr = rest[0]
+    if (nameExpr.type !== 'symbol') {
+      throw new Error(`call requires a function name at line ${nameExpr.line}`)
+    }
+
+    return this.buildCallNode(nameExpr, rest.slice(1), line, 'call arguments must be numbers or variables')
+  }
+
+  private createImplicitCallNode(head: SymbolExpression, args: Expression[]): CallNode {
+    return this.buildCallNode(head, args, head.line, 'function arguments must be numbers or variables')
+  }
+
+  private buildCallNode(
+    nameExpr: SymbolExpression,
+    argExprs: Expression[],
+    line: number,
+    message: string
+  ): CallNode {
+    const args = argExprs.map(expr => this.createExpressionNode(expr, message))
+
+    return {
+      type: 'call',
+      name: nameExpr.value,
+      args,
+      line
+    }
+  }
+
+  private createExpressionNode(expr: Expression, message: string): ExpressionNode {
+    if (expr.type === 'number') {
+      return this.createNumberLiteral(expr)
+    }
+
+    if (expr.type === 'symbol') {
+      return this.createVariableReference(expr)
+    }
+
+    throw new Error(`${message} at line ${expr.line}`)
+  }
+
+  private createNumberLiteral(expr: NumberExpression): NumberLiteralNode {
+    if (expr.value < 0) {
+      throw new Error(`Numbers must be non-negative at line ${expr.line}`)
+    }
+
+    return {
+      type: 'number_literal',
+      value: expr.value,
+      line: expr.line
+    }
+  }
+
+  private createVariableReference(expr: SymbolExpression): VariableReferenceNode {
+    return {
+      type: 'variable',
+      name: expr.value,
+      line: expr.line
+    }
   }
 
   private advance(): Token | undefined {

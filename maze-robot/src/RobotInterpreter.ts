@@ -1,6 +1,6 @@
 import { Maze, Position, Direction, CellType } from './types'
 import { Parser } from './Parser'
-import { ASTNode, BlockNode, CommandNode } from './AST'
+import { ASTNode, BlockNode, CommandNode, FunctionNode, ExpressionNode } from './AST'
 
 export class RobotInterpreter {
   private maze: Maze
@@ -133,35 +133,107 @@ export function parseCode(code: string, interpreter?: RobotInterpreter): string[
 
 function flattenAST(ast: BlockNode, interpreter?: RobotInterpreter): string[] {
   const commands: string[] = []
+  const functions = new Map<string, FunctionNode>()
+  const envStack: Map<string, number>[] = [new Map()]
 
-  const walk = (node: ASTNode) => {
+  const evaluateExpression = (expr: ExpressionNode): number => {
+    if (expr.type === 'number_literal') {
+      return expr.value
+    }
+
+    if (expr.type === 'variable') {
+      for (let i = envStack.length - 1; i >= 0; i--) {
+        const env = envStack[i]
+        if (env.has(expr.name)) {
+          const value = env.get(expr.name)
+          return value ?? 0
+        }
+      }
+      throw new Error(`Undefined variable '${expr.name}'`)
+    }
+
+    throw new Error('Unsupported expression')
+  }
+
+  const assignVariable = (name: string, value: number) => {
+    envStack[envStack.length - 1].set(name, value)
+  }
+
+  const withScope = <T>(callback: () => T, initialValues?: Map<string, number>): T => {
+    const scope = initialValues ? new Map(initialValues) : new Map<string, number>()
+    envStack.push(scope)
+    try {
+      return callback()
+    } finally {
+      envStack.pop()
+    }
+  }
+
+  const walkNode = (node: ASTNode) => {
     switch (node.type) {
       case 'command':
         commands.push(mapCommand(node))
         break
-      case 'repeat':
-        for (let i = 0; i < node.count; i++) {
-          node.body.forEach(walk)
+      case 'repeat': {
+        const count = Math.floor(evaluateExpression(node.count))
+        if (count < 0) {
+          throw new Error('repeat count must be non-negative')
+        }
+        for (let i = 0; i < count; i++) {
+          node.body.forEach(walkNode)
         }
         break
-      case 'if':
+      }
+      case 'if': {
         if (!interpreter) {
-          node.body.forEach(walk)
+          node.body.forEach(walkNode)
           break
         }
         const sensorResult = interpreter.sensor(node.condition.direction)
         const condition = node.condition.negated ? !sensorResult : sensorResult
         if (condition) {
-          node.body.forEach(walk)
+          node.body.forEach(walkNode)
         }
         break
+      }
       case 'block':
-        node.statements.forEach(walk)
+        node.statements.forEach(walkNode)
         break
+      case 'set': {
+        const value = evaluateExpression(node.value)
+        assignVariable(node.name, value)
+        break
+      }
+      case 'function':
+        functions.set(node.name, node)
+        break
+      case 'call': {
+        const func = functions.get(node.name)
+        if (!func) {
+          throw new Error(`Unknown function '${node.name}'`)
+        }
+        if (func.params.length !== node.args.length) {
+          throw new Error(`Function '${func.name}' expected ${func.params.length} argument(s) but received ${node.args.length}`)
+        }
+        const initialValues = new Map<string, number>()
+        func.params.forEach((param, index) => {
+          initialValues.set(param, evaluateExpression(node.args[index]))
+        })
+        withScope(() => {
+          func.body.forEach(walkNode)
+        }, initialValues)
+        break
+      }
     }
   }
 
-  ast.statements.forEach(walk)
+  ast.statements.forEach(statement => {
+    if (statement.type === 'function') {
+      functions.set(statement.name, statement as FunctionNode)
+    }
+  })
+
+  ast.statements.forEach(walkNode)
   return commands
 }
 
