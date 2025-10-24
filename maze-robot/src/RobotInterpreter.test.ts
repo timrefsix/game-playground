@@ -207,44 +207,25 @@ describe('RobotInterpreter', () => {
 
 describe('parseCode', () => {
   it('should parse single command', () => {
-    const commands = parseCode('forward')
+    const commands = parseCode('(forward)')
     expect(commands).toEqual(['forward'])
   })
 
   it('should parse multiple commands', () => {
-    const commands = parseCode('forward\nturn left\nforward')
+    const commands = parseCode('(forward)\n(turn left)\n(forward)')
     expect(commands).toEqual(['forward', 'turn left', 'forward'])
   })
 
-  it('should trim whitespace from each line', () => {
-    const commands = parseCode('  forward  \n  turn left  ')
-    expect(commands).toEqual(['forward', 'turn left'])
-  })
-
-  it('should filter out empty lines', () => {
-    const commands = parseCode('forward\n\n\nturn left')
-    expect(commands).toEqual(['forward', 'turn left'])
-  })
-
-  it('should filter out # comments', () => {
-    const commands = parseCode('forward\n# This is a comment\nturn left')
-    expect(commands).toEqual(['forward', 'turn left'])
-  })
-
-  it('should filter out // comments', () => {
-    const commands = parseCode('forward\n// This is a comment\nturn left')
-    expect(commands).toEqual(['forward', 'turn left'])
-  })
-
-  it('should handle mixed content', () => {
+  it('should ignore comments and whitespace', () => {
     const code = `
-      # Move forward
-      forward
+      ; Move forward
+      (forward)
 
       // Turn left
-      turn left
+      (turn left)
 
-      forward
+      # Move again
+      (forward)
     `
     const commands = parseCode(code)
     expect(commands).toEqual(['forward', 'turn left', 'forward'])
@@ -256,80 +237,62 @@ describe('parseCode', () => {
   })
 
   it('should return empty array for only comments', () => {
-    const commands = parseCode('# Comment 1\n// Comment 2')
+    const commands = parseCode('; Comment 1\n// Comment 2\n# Comment 3')
     expect(commands).toEqual([])
   })
 
   describe('repeat blocks', () => {
-    it('should expand simple repeat block with braces', () => {
-      const code = `repeat 3 {
-forward
-}`
+    it('should expand simple repeat block', () => {
+      const code = '(repeat 3 (forward))'
       const commands = parseCode(code)
       expect(commands).toEqual(['forward', 'forward', 'forward'])
     })
 
     it('should expand repeat block with multiple commands', () => {
-      const code = `repeat 2 {
-forward
-turn left
-}`
+      const code = '(repeat 2 (forward) (turn left))'
       const commands = parseCode(code)
       expect(commands).toEqual(['forward', 'turn left', 'forward', 'turn left'])
     })
 
-    it('should handle repeat with braces on same line', () => {
-      const code = `repeat 3 {
-forward
-turn right
-}`
-      const commands = parseCode(code)
-      expect(commands).toEqual(['forward', 'turn right', 'forward', 'turn right', 'forward', 'turn right'])
-    })
-
     it('should handle commands before and after repeat', () => {
-      const code = `forward
-repeat 2 {
-turn left
-}
-forward`
+      const code = `
+        (forward)
+        (repeat 2 (turn left))
+        (forward)
+      `
       const commands = parseCode(code)
       expect(commands).toEqual(['forward', 'turn left', 'turn left', 'forward'])
     })
 
     it('should handle multiple repeat blocks', () => {
-      const code = `repeat 2 {
-forward
-}
-repeat 2 {
-turn left
-}`
+      const code = `
+        (repeat 2 (forward))
+        (repeat 2 (turn left))
+      `
       const commands = parseCode(code)
       expect(commands).toEqual(['forward', 'forward', 'turn left', 'turn left'])
     })
 
     it('should handle repeat count of 0', () => {
-      const code = `repeat 0 {
-forward
-}`
+      const code = '(repeat 0 (forward))'
       const commands = parseCode(code)
       expect(commands).toEqual([])
     })
 
     it('should handle repeat count of 1', () => {
-      const code = `repeat 1 {
-forward
-}`
+      const code = '(repeat 1 (forward))'
       const commands = parseCode(code)
       expect(commands).toEqual(['forward'])
     })
 
     it('should ignore comments inside repeat blocks', () => {
-      const code = `repeat 2 {
-forward
-# This is a comment
-turn left
-}`
+      const code = `
+        (repeat 2
+          (forward)
+          ; This is a comment
+          (turn left)
+        )
+      `
       const commands = parseCode(code)
       expect(commands).toEqual(['forward', 'turn left', 'forward', 'turn left'])
     })
@@ -431,20 +394,16 @@ describe('parseCode - Conditionals', () => {
       // Turn left to face wall
       interpreter.execute('turn left')
 
-      const code = `if sensor front {
-forward
-}`
+      const code = '(if (sensor front) (forward))'
       const commands = parseCode(code, interpreter)
       // Wall is detected, but we're asking if there's a wall in front
       // Since there IS a wall, condition is true, but we shouldn't move forward
       expect(commands).toEqual(['forward'])
     })
 
-    it('should skip commands when sensor condition is false', () => {
+    it('should execute commands when sensor condition is true for other directions', () => {
       // Facing EAST, no wall in front
-      const code = `if sensor left {
-turn right
-}`
+      const code = '(if (sensor left) (turn right))'
       const commands = parseCode(code, interpreter)
       // Wall IS to the left, so condition is true
       expect(commands).toEqual(['turn right'])
@@ -452,9 +411,7 @@ turn right
 
     it('should handle "if not sensor" correctly', () => {
       // Facing EAST, no wall in front
-      const code = `if not sensor front {
-forward
-}`
+      const code = '(if (not (sensor front)) (forward))'
       const commands = parseCode(code, interpreter)
       // No wall in front, so "not sensor front" is true
       expect(commands).toEqual(['forward'])
@@ -464,42 +421,34 @@ forward
       // Turn to face wall
       interpreter.execute('turn left')
 
-      const code = `if not sensor front {
-forward
-}`
+      const code = '(if (not (sensor front)) (forward))'
       const commands = parseCode(code, interpreter)
       // Wall in front, so "not sensor front" is false
       expect(commands).toEqual([])
     })
 
-    it('should handle multiple commands in if block', () => {
-      const code = `if not sensor front {
-forward
-forward
-turn right
-}`
+    it('should handle multiple commands in an if block', () => {
+      const code = '(if (not (sensor front)) (forward) (forward) (turn right))'
       const commands = parseCode(code, interpreter)
       expect(commands).toEqual(['forward', 'forward', 'turn right'])
     })
 
     it('should handle if blocks with other commands', () => {
-      const code = `forward
-if sensor left {
-turn left
-}
-forward`
+      const code = `
+        (forward)
+        (if (sensor left) (turn left))
+        (forward)
+      `
       const commands = parseCode(code, interpreter)
       // Wall is to the left
       expect(commands).toEqual(['forward', 'turn left', 'forward'])
     })
 
     it('should handle multiple if blocks', () => {
-      const code = `if sensor left {
-turn right
-}
-if not sensor front {
-forward
-}`
+      const code = `
+        (if (sensor left) (turn right))
+        (if (not (sensor front)) (forward))
+      `
       const commands = parseCode(code, interpreter)
       expect(commands).toEqual(['turn right', 'forward'])
     })
@@ -507,21 +456,15 @@ forward
     it('should test different directions', () => {
       interpreter.execute('turn left') // Face north
 
-      const codeFront = `if sensor front {
-forward
-}`
+      const codeFront = '(if (sensor front) (forward))'
       expect(parseCode(codeFront, interpreter)).toEqual(['forward'])
 
       // When facing north, back is south - which has a wall at (1,2)
-      const codeBack = `if sensor back {
-forward
-}`
+      const codeBack = '(if (sensor back) (forward))'
       expect(parseCode(codeBack, interpreter)).toEqual(['forward'])
 
       // Test right direction - when facing north, right is east with no wall
-      const codeRight = `if not sensor right {
-turn right
-}`
+      const codeRight = '(if (not (sensor right)) (turn right))'
       expect(parseCode(codeRight, interpreter)).toEqual(['turn right'])
     })
   })

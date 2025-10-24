@@ -11,7 +11,7 @@ describe('ASTExecutor', () => {
     ]
     const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
 
-    const parser = new Parser('forward\nforward\nforward')
+    const parser = new Parser('(forward)\n(forward)\n(forward)')
     const ast = parser.parse()
     const executor = new ASTExecutor(interpreter, ast)
 
@@ -37,13 +37,16 @@ describe('ASTExecutor', () => {
     ]
     const interpreter = new RobotInterpreter(maze, { x: 1, y: 1 }, Direction.EAST)
 
-    const code = `forward
-forward
-forward
-turn right
-forward
-forward
-forward`
+    const code = `
+      (forward)
+      (forward)
+      (turn right)
+      (forward)
+      (forward)
+      (turn left)
+      (forward)
+      (forward)
+    `
 
     const parser = new Parser(code)
     const ast = parser.parse()
@@ -71,7 +74,7 @@ forward`
     ]
     const interpreter = new RobotInterpreter(maze, { x: 0, y: 0 }, Direction.EAST)
 
-    const parser = new Parser('repeat 3 {\n  forward\n}')
+    const parser = new Parser('(repeat 3 (forward))')
     const ast = parser.parse()
     const executor = new ASTExecutor(interpreter, ast)
 

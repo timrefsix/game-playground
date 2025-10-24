@@ -16,14 +16,16 @@ describe('Level 2 Debug', () => {
     ]
     const interpreter = new RobotInterpreter(maze, { x: 1, y: 1 }, Direction.EAST)
 
-    const code = `forward
-forward
-turn right
-forward
-forward
-turn left
-forward
-forward`
+    const code = `
+      (forward)
+      (forward)
+      (turn right)
+      (forward)
+      (forward)
+      (turn left)
+      (forward)
+      (forward)
+    `
 
     const parser = new Parser(code)
     const ast = parser.parse()

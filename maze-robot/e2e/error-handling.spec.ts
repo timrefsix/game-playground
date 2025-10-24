@@ -7,16 +7,16 @@ test.describe('Error Handling', () => {
 
   test('should show error for unknown command', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('jump')
+    await editor.fill('(jump)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
-    await expect(page.getByText(/Unknown command: jump/)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/Unknown expression 'jump'/)).toBeVisible({ timeout: 5000 })
   })
 
   test('should show error for hitting wall', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('turn left\nforward')
+    await editor.fill('(turn left)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -26,7 +26,7 @@ test.describe('Error Handling', () => {
   test('should stop execution after error', async ({ page }) => {
     const editor = page.getByRole('textbox')
     // Turn left, hit wall, then try to turn right (should not execute)
-    await editor.fill('turn left\nforward\nturn right')
+    await editor.fill('(turn left)\n(forward)\n(turn right)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -42,7 +42,7 @@ test.describe('Error Handling', () => {
   test('should not execute commands after reaching goal', async ({ page }) => {
     const editor = page.getByRole('textbox')
     // Complete level but add extra commands
-    await editor.fill('forward\nforward\nforward\nforward\nforward\nforward')
+    await editor.fill('(forward)\n(forward)\n(forward)\n(forward)\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -54,7 +54,7 @@ test.describe('Error Handling', () => {
 
   test('should handle case-insensitive commands', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('FORWARD\nForward\nFoRwArD\nforward')
+    await editor.fill('(FORWARD)\n(Forward)\n(FoRwArD)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -63,7 +63,7 @@ test.describe('Error Handling', () => {
 
   test('should handle whitespace in commands', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('  forward  \n\t forward\t\n   forward   \n forward ')
+    await editor.fill('  (forward)\n\t(forward)\t\n   (forward)   \n (forward) ')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -72,7 +72,7 @@ test.describe('Error Handling', () => {
 
   test('should show warning when not reaching goal', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward')
+    await editor.fill('(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 

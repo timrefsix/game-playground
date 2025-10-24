@@ -28,19 +28,23 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
 
   // Generate placeholder based on available commands
   const getPlaceholder = () => {
-    const commands = ['forward (or move forward)']
+    const commands = ['(forward)']
     if (showTurning) {
-      commands.push('turn left (or left)', 'turn right (or right)')
+      commands.push('(turn left)', '(turn right)')
     }
     if (showRepeat) {
-      commands.push('repeat N { commands }')
+      commands.push('(repeat N (...))')
     }
     if (showSensors) {
-      commands.push('if sensor direction { commands }', 'if not sensor direction { commands }')
+      commands.push('(if (sensor direction) (...))', '(if (not (sensor direction)) (...))')
     }
 
-    const commandsList = commands.map(cmd => `#   ${cmd}`).join('\n')
-    return `# Write your commands here\n# Available commands:\n${commandsList}\n#\n# Example:\nforward\nforward\n${showTurning ? 'turn right\nforward' : ''}`
+    const commandsList = commands.map(cmd => `;   ${cmd}`).join('\n')
+    const example = showTurning
+      ? ['(forward)', '(turn right)', '(forward)']
+      : ['(forward)', '(forward)']
+
+    return `; Write your commands here\n; Available commands:\n${commandsList}\n;\n; Example:\n${example.join('\n')}`
   }
 
   const lines = code ? code.split('\n') : ['']
@@ -75,8 +79,8 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
         <ul>
           {showBasicMovement && (
             <li>
-              <code onClick={() => handleCommandClick('forward')} className="clickable">
-                forward
+              <code onClick={() => handleCommandClick('(forward)')} className="clickable">
+                (forward)
               </code>{' '}
               - Move one step forward
             </li>
@@ -84,14 +88,14 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
           {showTurning && (
             <>
               <li>
-                <code onClick={() => handleCommandClick('turn left')} className="clickable">
-                  turn left
+                <code onClick={() => handleCommandClick('(turn left)')} className="clickable">
+                  (turn left)
                 </code>{' '}
                 - Turn 90° left
               </li>
               <li>
-                <code onClick={() => handleCommandClick('turn right')} className="clickable">
-                  turn right
+                <code onClick={() => handleCommandClick('(turn right)')} className="clickable">
+                  (turn right)
                 </code>{' '}
                 - Turn 90° right
               </li>
@@ -99,8 +103,11 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
           )}
           {showRepeat && (
             <li>
-              <code onClick={() => handleCommandClick('repeat 3 {\n  forward\n}')} className="clickable">
-                repeat N {'{ ... }'}
+              <code
+                onClick={() => handleCommandClick('(repeat 3\n  (forward)\n)')}
+                className="clickable"
+              >
+                (repeat N ...)
               </code>{' '}
               - Repeat commands N times
             </li>
@@ -108,14 +115,20 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
           {showSensors && (
             <>
               <li>
-                <code onClick={() => handleCommandClick('if sensor front {\n  turn left\n}')} className="clickable">
-                  if sensor direction {'{ ... }'}
+                <code
+                  onClick={() => handleCommandClick('(if (sensor front)\n  (turn left)\n)')}
+                  className="clickable"
+                >
+                  (if (sensor direction) ...)
                 </code>{' '}
                 - Execute if wall detected (front/back/left/right)
               </li>
               <li>
-                <code onClick={() => handleCommandClick('if not sensor front {\n  forward\n}')} className="clickable">
-                  if not sensor direction {'{ ... }'}
+                <code
+                  onClick={() => handleCommandClick('(if (not (sensor front))\n  (forward)\n)')}
+                  className="clickable"
+                >
+                  (if (not (sensor direction)) ...)
                 </code>{' '}
                 - Execute if no wall detected
               </li>
@@ -124,7 +137,7 @@ export function CodeEditor({ code, onChange, currentExecutingLine = -1, currentL
         </ul>
         {!dismissedTips.has('comments') && (
           <p className="tip" onClick={() => dismissTip('comments')}>
-            💡 Tip: Lines starting with # are comments
+            💡 Tip: Lines starting with ;, #, or // are comments
             <span className="dismiss-icon">✕</span>
           </p>
         )}

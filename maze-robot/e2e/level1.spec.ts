@@ -12,7 +12,7 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should complete level with correct solution', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward\nforward\nforward')
+    await editor.fill('(forward)\n(forward)\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -22,7 +22,7 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should allow stepping through commands', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward')
+    await editor.fill('(forward)\n(forward)')
 
     // Step once
     await page.getByRole('button', { name: 'Step' }).click()
@@ -38,7 +38,7 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should show error when hitting wall', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('turn left\nforward')
+    await editor.fill('(turn left)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -47,7 +47,7 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should reset execution', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward')
+    await editor.fill('(forward)')
 
     await page.getByRole('button', { name: 'Step' }).click()
     await page.waitForTimeout(100)
@@ -61,7 +61,7 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should pause execution', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward\nforward\nforward')
+    await editor.fill('(forward)\n(forward)\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -88,12 +88,13 @@ test.describe('Level 1 - Straight Line', () => {
 
   test('should handle comments in code', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill(`# This is a comment
-forward
+    await editor.fill(`; This is a comment
+(forward)
 // Another comment
-forward
-forward
-forward`)
+(forward)
+# Final comment
+(forward)
+(forward)`)
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -102,7 +103,7 @@ forward`)
 
   test('should handle empty lines in code', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\n\n\nforward\n\nforward\nforward')
+    await editor.fill('(forward)\n\n\n(forward)\n\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
@@ -111,7 +112,7 @@ forward`)
 
   test('should display Next Level button after completion', async ({ page }) => {
     const editor = page.getByRole('textbox')
-    await editor.fill('forward\nforward\nforward\nforward')
+    await editor.fill('(forward)\n(forward)\n(forward)\n(forward)')
 
     await page.getByRole('button', { name: 'Play' }).click()
 
